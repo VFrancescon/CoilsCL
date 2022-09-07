@@ -12,7 +12,7 @@ int main(int argc, char* argv[]){
         PSU1.WriteVI(60,0);
         PSU2.WriteVI(60,0);
 
-        PSU1.setPolarity(0x00);
+        PSU1.setPolarity(0x01);
         PSU2.setPolarity(0x01);
 
         PSU1.PoCtrl(0x01);
@@ -24,8 +24,21 @@ int main(int argc, char* argv[]){
         PSU1.WriteCurrent(inputField*1.849);
         PSU2.WriteCurrent(inputField*1.849);
 
+        std::cout << "Press enter to flip";
+        std::cin.get();
+
+
+        PSU1.setPolarity(0x00);
+        PSU2.setPolarity(0x00);
+
+
         std::cout << "Press enter to quit";
         std::cin.get();
+
+        PSU1.WriteVI(0,0);
+        PSU2.WriteVI(0,0);
+        PSU1.PoCtrl(0x00);
+        PSU2.PoCtrl(0x00);
     }
 
     return 0;
