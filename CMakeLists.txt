@@ -28,6 +28,7 @@ set(MiddlewareLibs ${MID} ${PSU} ${LINACT} ${TMETER} ${SERIAL} Threads::Threads)
 set(PSULibs ${PSU} ${SERIAL})
 set(LinActLibs ${LINACT} ${SERIAL})
 set(TmeterLibs ${TMETER} ${SERIAL})
+set(VisionLibs ${Pylon_LIBRARIES} ${OpenCV_LIBS})
 
 ## Add your source files here to executables
 add_executable(main "src/main.cpp")
