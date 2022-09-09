@@ -29,6 +29,8 @@ set(PSULibs ${PSU} ${SERIAL})
 set(LinActLibs ${LINACT} ${SERIAL})
 set(TmeterLibs ${TMETER} ${SERIAL})
 set(VisionLibs ${Pylon_LIBRARIES} ${OpenCV_LIBS})
+set(EIGEN Eigen3::Eigen)
+set(THREADS Threads::Threads)
 
 ## S4: Set include directories
 include_directories(${CMAKE_SOURCE_DIR}/include)
@@ -38,9 +40,7 @@ include_directories(/opt/pylon/include)
 ## Add your source files here to executables
 add_executable(main "src/main.cpp")
 add_executable(field3D "src/set3DField.cpp")
-add_executable( fakeGradients "src/fakeGradients.cpp")
 
 ## Link the libraries frim S3 here
 target_link_libraries( main ${MiddlewareLibs})
 target_link_libraries(field3D ${MiddlewareLibs})
-target_link_libraries(fakeGradients ${PSULibs})
