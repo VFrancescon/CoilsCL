@@ -29,6 +29,8 @@ set(PSULibs ${PSU} ${SERIAL})
 set(LinActLibs ${LINACT} ${SERIAL})
 set(TmeterLibs ${TMETER} ${SERIAL})
 set(VisionLibs ${Pylon_LIBRARIES} ${OpenCV_LIBS})
+set(EIGEN Eigen3::Eigen)
+set(THREADS Threads::Threads)
 
 ## S4: Set include directories
 include_directories(${CMAKE_SOURCE_DIR}/include)
