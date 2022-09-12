@@ -3,7 +3,7 @@
 #include <iostream>
 #include <unistd.h>
 #define ONEMILLION 1000000
-
+#define WAITTIME 5
 #include <chrono>
 #include <condition_variable>
 
@@ -25,13 +25,13 @@ int main(int argc, char* argv[]){
         std::cout << "Slowly stepping to -maxAbs\n";
         mid.set3DField(-maxAbs/4, 0, 0);
         std::cout << "One quarter" << -maxAbs/4  << "\n";
-        usleep(2*ONEMILLION);
+        usleep(WAITTIME*ONEMILLION);
         mid.set3DField(-maxAbs/2, 0, 0);
         std::cout << "Half" << -maxAbs/2 << "\n";
-        usleep(2*ONEMILLION);
+        usleep(WAITTIME*ONEMILLION);
         mid.set3DField(-maxAbs/4*3, 0, 0);
         std::cout << "Three quarter" << -maxAbs/4 * 3 << "\n";
-        usleep(2*ONEMILLION);
+        usleep(WAITTIME*ONEMILLION);
 
 
         std::cout << "Stepped to -maxAbs. Press enter to begin";
@@ -41,7 +41,7 @@ int main(int argc, char* argv[]){
             std::cout << "Setting field= " << field << "\n";
             mid.set3DField(field, 0, 0);
             std::cout << "Field set. going to sleep\n\n";
-            usleep(2*ONEMILLION);
+            usleep(WAITTIME*ONEMILLION);
         }
     } else{
         std::cout << "USAGE:\n";

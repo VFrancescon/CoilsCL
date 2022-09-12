@@ -8,7 +8,7 @@
 #include "HCoilMiddlewareLib/HCoilMiddlewareLib.hpp"
 
 #define ONEMILLION 1000000
-
+#define WAITTIME 2
 using namespace cv;
 
 
@@ -53,7 +53,12 @@ int main(int argc, char * argv[])
     CAMERA SETUP HERE, IGNORE
     ****************************/
     
-    
+    camera.RetrieveResult(5000, ptrGrabResult, Pylon::TimeoutHandling_ThrowException);
+    const uint8_t* pImageBuffer = (uint8_t*) ptrGrabResult->GetBuffer();
+    formatConverter.Convert(pylonImage, ptrGrabResult);
+    outputFileName = "AlistairResults/" + expName + "refPicture.png";
+    Pylon::String_t path = outputFileName.c_str();
+    pylonImage.Save(png, path);
     
     
     
@@ -64,16 +69,21 @@ int main(int argc, char * argv[])
     int counter = 1;
     int i = -25;
 
+    std::cout << "Initialising. setting field to -5\n";
     mid.set3DField(-5, 0, 0);
-    usleep(10*ONEMILLION);
+    usleep(WAITTIME*ONEMILLION);
+    std::cout << "Initialising. setting field to -10\n";
     mid.set3DField(-10, 0, 0);
-    usleep(10*ONEMILLION);
+    usleep(WAITTIME*ONEMILLION);
+    std::cout << "Initialising. setting field to -15\n";
     mid.set3DField(-15, 0, 0);
-    usleep(10*ONEMILLION);
+    usleep(WAITTIME*ONEMILLION);
+    std::cout << "Initialising. setting field to -20\n";
     mid.set3DField(-20, 0, 0);
-    usleep(10*ONEMILLION);
+    usleep(WAITTIME*ONEMILLION);
+    std::cout << "Initialising. setting field to -25\n";
     mid.set3DField(-25, 0, 0);
-    usleep(10*ONEMILLION);
+    usleep(WAITTIME*ONEMILLION);
 
     std::cout << "Initialisation complete. Press Enter to begin.";
     std::cin.get();
@@ -81,7 +91,7 @@ int main(int argc, char * argv[])
     while(camera.IsGrabbing()){
         outputFileName = "AlistairResults/" + expName + "step_" +  std::to_string(counter)  + 
         "field_" + std::to_string(i) + ".png";
-        Pylon::String_t path = outputFileName.c_str();
+        path = outputFileName.c_str();
         
         if(i > 25) {
             break;
@@ -94,10 +104,10 @@ int main(int argc, char * argv[])
         mid.set3DField(field, 0, 0);
         i = i + 5;
         counter++;
-        std::cout << "Field set. going to sleep for 10 seconds\n";
+        std::cout << "Field set. going to sleep for " << WAITTIME << " seconds\n";
         
         // Sleep for some time
-        usleep(15 * ONEMILLION);
+        usleep(WAITTIME * ONEMILLION);
 
         // Take a snapshot from the camera
         camera.RetrieveResult(5000, ptrGrabResult, Pylon::TimeoutHandling_ThrowException);
