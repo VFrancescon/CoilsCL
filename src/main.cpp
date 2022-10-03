@@ -2,7 +2,8 @@
 
 int main(int argc, char* argv[]){
     
-    MiddlewareLayer mid;
+    // MiddlewareLayer mid;
+    Joint iJoint;
 
     return 0;
 }
