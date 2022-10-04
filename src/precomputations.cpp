@@ -1,7 +1,7 @@
 #include "precomputation.hpp"
 
 int main(int argc, char* argv[]){
-    int jointEff = 2;
+    int jointEff = 3;
     int jointNo = jointEff+1;
 
     //timesteps are equal to joint no
@@ -18,11 +18,13 @@ int main(int argc, char* argv[]){
     std::vector<int> DesiredAngles(jointNo);
     DesiredAngles[0] = 10;
     DesiredAngles[1] = 20;
+    DesiredAngles[2] = 20;
     DesiredAngles[jointEff] = 0;
 
     std::vector<Vector3d> Magnetisations(jointNo);
-    Magnetisations[0] = Vector3d(0,0,-0.003);
-    Magnetisations[1] = Vector3d(0,0,-0.003);
+    Magnetisations[0] = Vector3d(0,0,0.001);
+    Magnetisations[1] = Vector3d(0,0,0.003);
+    Magnetisations[2] = Vector3d(0,0,-0.003);
     Magnetisations[jointEff] = Vector3d(0,0,0);
 
     std::vector<PosOrientation> iPosVec(jointNo);
@@ -48,26 +50,40 @@ int main(int argc, char* argv[]){
         iJoints[i].LocMag = Magnetisations[i];
     }
 
-    VectorXd AnglesStacked;
-    AnglesStacked = StackAngles(iJoints);
+    for(int k = jointEff; k >= 1 ; --k){
 
-    MatrixXd KStacked;
-    KStacked = EvaluateK(iLinks);
-    
+        VectorXd AnglesStacked;
+        AnglesStacked = StackAngles(iJoints);
 
-    DirectKinematics(iPosVec, iJoints, iLinks);
-    MatrixXd Jacobian, Jt;
-    Jacobian = EvaluateJacobian(iPosVec);
-    Jt = Jacobian.transpose();
+        MatrixXd KStacked;
+        KStacked = EvaluateK(iLinks);
+        
 
-    MatrixXd FieldMap;
-    FieldMap = MagtoFieldMap(iJoints);
+        DirectKinematics(iPosVec, iJoints, iLinks);
+        MatrixXd Jacobian, Jt;
+        Jacobian = EvaluateJacobian(iPosVec);
+        Jt = Jacobian.transpose();
 
-    MatrixXd RHS = Jt*FieldMap;
-    AnglesStacked = AnglesStacked * M_PI / 180;
-    MatrixXd LHS = KStacked * AnglesStacked;
+        MatrixXd FieldMap;
+        FieldMap = MagtoFieldMap(iJoints);
 
-    MatrixXd solution = RHS.completeOrthogonalDecomposition().solve(LHS);
+        MatrixXd RHS = Jt*FieldMap;
+        AnglesStacked = AnglesStacked * M_PI / 180;
+        MatrixXd LHS = KStacked * AnglesStacked;
+
+        MatrixXd solution = RHS.completeOrthogonalDecomposition().solve(LHS);
+        AppliedFields.push_back(solution);
+        DesiredAngles.pop_back();
+        Magnetisations.pop_back();
+        pop_front(iJoints);
+        pop_front(iPosVec);
+        pop_front(iLinks);
+    }
+    std::reverse(AppliedFields.begin(), AppliedFields.end());
+    std::cout << "Fields calculated:\n";
+    for(auto i: AppliedFields){
+        std::cout << i * 1000 << "\n";
+    }
 
     return 0;
 }
@@ -235,7 +251,7 @@ VectorXd StackAngles(std::vector<Joint>& iJoints){
     int jointEff = iJoints.size();
     VectorXd stacked;
 
-    if(jointEff == 1){
+    if(jointEff == 2){
         stacked = iJoints[0].q;
     }
     else{
