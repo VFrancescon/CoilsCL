@@ -1,7 +1,7 @@
 #include "precomputation.hpp"
 
 int main(int argc, char* argv[]){
-    int jointEff = 3;
+    int jointEff = 5;
     int jointNo = jointEff+1;
 
     //timesteps are equal to joint no
@@ -16,15 +16,19 @@ int main(int argc, char* argv[]){
     std::vector<Vector3d> AppliedFields;
 
     std::vector<int> DesiredAngles(jointNo);
-    DesiredAngles[0] = 10;
+    DesiredAngles[0] = 20;
     DesiredAngles[1] = 20;
-    DesiredAngles[2] = 20;
+    DesiredAngles[2] = 30;
+    DesiredAngles[3] = 30;
+    DesiredAngles[4] = 30;
     DesiredAngles[jointEff] = 0;
 
     std::vector<Vector3d> Magnetisations(jointNo);
-    Magnetisations[0] = Vector3d(0,0,0.001);
-    Magnetisations[1] = Vector3d(0,0,0.003);
+    Magnetisations[0] = Vector3d(-0.0011,0,-0.0028);
+    Magnetisations[1] = Vector3d(-0.0028,0,-0.001);
     Magnetisations[2] = Vector3d(0,0,-0.003);
+    Magnetisations[3] = Vector3d(-0.003,0,0);
+    Magnetisations[4] = Vector3d(0,0,-0.003);
     Magnetisations[jointEff] = Vector3d(0,0,0);
 
     std::vector<PosOrientation> iPosVec(jointNo);
@@ -82,7 +86,7 @@ int main(int argc, char* argv[]){
     std::reverse(AppliedFields.begin(), AppliedFields.end());
     std::cout << "Fields calculated:\n";
     for(auto i: AppliedFields){
-        std::cout << i * 1000 << "\n";
+        std::cout << i * 1000 << "\n\n";
     }
 
     return 0;
