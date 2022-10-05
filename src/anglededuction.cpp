@@ -31,13 +31,28 @@ int main(int argc, char* argv[]){
     std::vector<Point> Joints;
     Joints = findJoints(pre_img, post_img);
 
+    
     for(auto i: Joints){
         circle(post_img, i, 4, Scalar(255,0,0), FILLED);        
     }
     
+    std::vector<double> angles;
+    for(int i = 1; i < Joints.size(); i++){
+        std::cout << Joints[i] << " ";
+        double ratio = ( Joints[i].x - Joints[i-1].x ) / ( Joints[i].y - Joints[i-1].y );
+        double theta = atan(ratio);
+        if(theta < 0) theta = M_PI_2 - abs(theta);
+        std::cout << "angle " << theta * 180 / M_PI_2 << "\n";
+
+        Rect recta(Joints[i], Joints[i-1]);
+        rectangle(post_img, recta, Scalar(0,0,255), 1);
+        line(post_img, Joints[i], Joints[i-1], Scalar(255,0,0), 1);
+    }
+
     imshow("Post", post_img);
     char c = (char)waitKey(0);
     destroyAllWindows();
+    imwrite("/home/vittorio/coilsCL/imgs/Processed_IMG.png", post_img);
     return 0;
 
 
