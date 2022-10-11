@@ -16,16 +16,16 @@ int main(int argc, char* argv[]){
     std::vector<Vector3d> AppliedFields;
 
     std::vector<int> DesiredAngles(jointNo);
-    DesiredAngles[0] = 20;
-    DesiredAngles[1] = 20;
+    DesiredAngles[0] = 30;
+    DesiredAngles[1] = 30;
     DesiredAngles[2] = 30;
     DesiredAngles[3] = 30;
     DesiredAngles[4] = 30;
     DesiredAngles[jointEff] = 0;
 
     std::vector<Vector3d> Magnetisations(jointNo);
-    Magnetisations[0] = Vector3d(-0.0011,0,-0.0028);
-    Magnetisations[1] = Vector3d(-0.0028,0,-0.001);
+    Magnetisations[0] = Vector3d(0,0,-0.003);
+    Magnetisations[1] = Vector3d(-0.003,0,0);
     Magnetisations[2] = Vector3d(0,0,-0.003);
     Magnetisations[3] = Vector3d(-0.003,0,0);
     Magnetisations[4] = Vector3d(0,0,-0.003);
@@ -61,7 +61,8 @@ int main(int argc, char* argv[]){
 
         MatrixXd KStacked;
         KStacked = EvaluateK(iLinks);
-        
+
+
 
         DirectKinematics(iPosVec, iJoints, iLinks);
         MatrixXd Jacobian, Jt;
@@ -74,6 +75,9 @@ int main(int argc, char* argv[]){
         MatrixXd RHS = Jt*FieldMap;
         AnglesStacked = AnglesStacked * M_PI / 180;
         MatrixXd LHS = KStacked * AnglesStacked;
+
+        MatrixXd partialDerivative = KStacked.inverse() * Jt * FieldMap;
+        std::cout << "k: " << k << " Partial derivative\n" << partialDerivative << "\n\n";
 
         MatrixXd solution = RHS.completeOrthogonalDecomposition().solve(LHS);
         AppliedFields.push_back(solution);

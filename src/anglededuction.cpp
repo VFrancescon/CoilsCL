@@ -10,6 +10,7 @@ bool xWiseSort(Point lhs, Point rhs){
 }
 
 std::vector<Point> findJoints(Mat pre_img, Mat post_img);
+double meanError(std::vector<double> &desired, std::vector<double> &observed);
 
 int main(int argc, char* argv[]){
     Mat pre_img = imread(pre_img_path, IMREAD_COLOR);
@@ -31,23 +32,26 @@ int main(int argc, char* argv[]){
     std::vector<Point> Joints;
     Joints = findJoints(pre_img, post_img);
 
-    
     for(auto i: Joints){
         circle(post_img, i, 4, Scalar(255,0,0), FILLED);        
     }
     
     std::vector<double> angles;
+    std::vector<double> desiredAngles = {90,30};
     for(int i = 1; i < Joints.size(); i++){
-        std::cout << Joints[i] << " ";
+        // std::cout << Joints[i] << " ";
         double ratio = ( Joints[i].x - Joints[i-1].x ) / ( Joints[i].y - Joints[i-1].y );
         double theta = atan(ratio);
         if(theta < 0) theta = M_PI_2 - abs(theta);
-        std::cout << "angle " << theta * 180 / M_PI_2 << "\n";
+        // std::cout << "angle " << theta * 180 / M_PI_2 << "\n";
 
         Rect recta(Joints[i], Joints[i-1]);
         rectangle(post_img, recta, Scalar(0,0,255), 1);
         line(post_img, Joints[i], Joints[i-1], Scalar(255,0,0), 1);
+        angles.push_back(theta * 180 / M_PI_2 );
     }
+    double error = meanError(desiredAngles, angles);
+    std::cout << "Error: " << error << "\n";
 
     imshow("Post", post_img);
     char c = (char)waitKey(0);
@@ -143,4 +147,14 @@ std::vector<Point> findJoints(Mat pre_img, Mat post_img){
     Joints.push_back(endpoint);
 
     return Joints;
+}
+
+double meanError(std::vector<double> &desired, std::vector<double> &observed){
+    double error, sum = 0;
+    for(size_t i = 0; i < desired.size(); i++){
+        sum += desired[i] - observed[i];
+    }
+    error = sum / desired.size();
+
+    return error;
 }

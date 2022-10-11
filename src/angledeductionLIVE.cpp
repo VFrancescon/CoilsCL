@@ -9,6 +9,8 @@ bool xWiseSort(Point lhs, Point rhs){
     return (lhs.x < rhs.x);
 }
 
+double meanError(std::vector<double> &desired, std::vector<double> &observed);
+
 std::vector<Point> findJoints(Mat post_img_masked);
 
 int main(int argc, char* argv[]){
@@ -30,7 +32,7 @@ int main(int argc, char* argv[]){
     resize(pre_img, pre_img, Size(rrows, rcols), INTER_LINEAR);
 
     intr_mask = IntroducerMask(pre_img);
-
+    int jointsCached = 0;
     while(true){
         cap >> post_img;
         if(post_img.empty())
@@ -46,25 +48,33 @@ int main(int argc, char* argv[]){
 
         std::vector<Point> Joints;
         Joints = findJoints(post_img_masked);
+        int JointsObserved = Joints.size();
 
         for(auto i: Joints){
             circle(post_img, i, 4, Scalar(255,0,0), FILLED);        
         }
-        
-        std::vector<double> angles;
-        for(int i = 1; i < Joints.size(); i++){
-            std::cout << Joints[i] << " ";
-            if(Joints[i].y - Joints[i-1].y == 0) continue;
-            double ratio = ( Joints[i].x - Joints[i-1].x ) / ( Joints[i].y - Joints[i-1].y );
-            double theta = atan(ratio);
-            if(theta < 0) theta = M_PI_2 - abs(theta);
-            std::cout << "angle " << theta * 180 / M_PI_2 << "\n";
 
+        
+        if(JointsObserved != jointsCached){
+            std::vector<double> angles;
+            std::vector<double> desiredAngles = {90,30, 50, 60, 80};
+            for(int i = 1; i < JointsObserved; i++){
+                if(Joints[i].y - Joints[i-1].y == 0) continue;
+                double ratio = ( Joints[i].x - Joints[i-1].x ) / ( Joints[i].y - Joints[i-1].y );
+                double theta = atan(ratio);
+                if(theta < 0) theta = M_PI_2 - abs(theta);
+                angles.push_back(theta * 180 / M_PI_2);
+            }
+            jointsCached = JointsObserved;
+            std::vector<double> dAngleSlice = std::vector<double>(desiredAngles.begin(), desiredAngles.begin()+angles.size());         
+            double error = meanError(dAngleSlice, angles);
+            std::cout << "Error: " << error << "\n";
+        }
+        for(int i = 1; i < JointsObserved; i++){
             Rect recta(Joints[i], Joints[i-1]);
             rectangle(post_img, recta, Scalar(0,0,255), 1);
             line(post_img, Joints[i], Joints[i-1], Scalar(255,0,0), 1);
         }
-
         imshow("Post", post_img);
         char c= (char)waitKey(1);
         if(c==27) break;
@@ -126,7 +136,7 @@ std::vector<Point> findJoints(Mat post_img_masked){
     std::sort(cntLine.begin(), cntLine.end(), xWiseSort);
     std::reverse(cntLine.begin(), cntLine.end());
     
-    int link_lenght = 75;
+    int link_lenght = 80;
     std::vector<Point> Joints;
     int jointCount = (int) cntLine.size() / link_lenght;
     if(jointCount){
@@ -153,4 +163,14 @@ std::vector<Point> findJoints(Mat post_img_masked){
     // Joints.push_back(endpoint);
 
     return Joints;
+}
+
+double meanError(std::vector<double> &desired, std::vector<double> &observed){
+    double error, sum = 0;
+    for(size_t i = 0; i < desired.size(); i++){
+        sum += desired[i] - observed[i];
+    }
+    error = sum / desired.size();
+
+    return error;
 }

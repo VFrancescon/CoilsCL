@@ -23,7 +23,7 @@ void pop_2ndback(std::vector<T>& vec)
 struct dfltValues{
     float len = 10e-3;
     float d = 2e-3;
-    float E = 100e3;
+    float E = 10000e3;
     float v = 0.43;
 };
 
