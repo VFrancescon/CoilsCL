@@ -16,16 +16,16 @@ int main(int argc, char* argv[]){
     std::vector<Vector3d> AppliedFields;
 
     std::vector<int> DesiredAngles(jointNo);
-    DesiredAngles[0] = 30;
-    DesiredAngles[1] = 30;
-    DesiredAngles[2] = 30;
+    DesiredAngles[0] = 0;
+    DesiredAngles[1] = 10;
+    DesiredAngles[2] = 20;
     DesiredAngles[3] = 30;
     DesiredAngles[4] = 30;
     DesiredAngles[jointEff] = 0;
 
     std::vector<Vector3d> Magnetisations(jointNo);
-    Magnetisations[0] = Vector3d(0,0,-0.003);
-    Magnetisations[1] = Vector3d(-0.003,0,0);
+    Magnetisations[0] = Vector3d(-0.0011,0,-0.0028);
+    Magnetisations[1] = Vector3d(-0.0028,0,0.001);
     Magnetisations[2] = Vector3d(0,0,-0.003);
     Magnetisations[3] = Vector3d(-0.003,0,0);
     Magnetisations[4] = Vector3d(0,0,-0.003);
@@ -77,9 +77,12 @@ int main(int argc, char* argv[]){
         MatrixXd LHS = KStacked * AnglesStacked;
 
         MatrixXd partialDerivative = KStacked.inverse() * Jt * FieldMap;
-        std::cout << "k: " << k << " Partial derivative\n" << partialDerivative << "\n\n";
-
+        // std::cout << "k: " << k << " Partial derivative\n" << partialDerivative << "\n\n";
+        
         MatrixXd solution = RHS.completeOrthogonalDecomposition().solve(LHS);
+
+        solution(1) = ( solution(1) > 1e-12 ) ? solution(1) : 0;
+        
         AppliedFields.push_back(solution);
         DesiredAngles.pop_back();
         Magnetisations.pop_back();
@@ -88,10 +91,11 @@ int main(int argc, char* argv[]){
         pop_front(iLinks);
     }
     std::reverse(AppliedFields.begin(), AppliedFields.end());
-    std::cout << "Fields calculated:\n";
-    for(auto i: AppliedFields){
-        std::cout << i * 1000 << "\n\n";
-    }
+    // std::cout << "Fields calculated:\n";
+    // for(auto i: AppliedFields){
+    //     std::cout << i * 1000 << "\n\n";
+    // }
+    std::cout << "For the final timestep: B=\n" << AppliedFields[AppliedFields.size()-1] * 1000 << "\n";
 
     return 0;
 }
