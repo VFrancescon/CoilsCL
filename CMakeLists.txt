@@ -48,6 +48,7 @@ add_executable(precomp "src/precomputations.cpp")
 add_executable(run_camera "src/run_camera")
 add_executable(angles "src/anglededuction.cpp")
 add_executable(LIVEangles "src/angledeductionLIVE.cpp")
+add_executable(csvSweep "src/csvSweep.cpp")
 
 ## Link the libraries frim S3 here
 target_link_libraries( main ${MiddlewareLibs})
@@ -60,3 +61,4 @@ target_link_libraries( precomp ${EIGEN})
 target_link_libraries( run_camera ${EIGEN} ${VisionLibs})
 target_link_libraries( angles ${EIGEN} ${VisionLibs})
 target_link_libraries( LIVEangles ${EIGEN} ${VisionLibs})
+target_link_libraries( csvSweep ${VisionLibs} ${MiddlewareLibs})
