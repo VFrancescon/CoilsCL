@@ -8,14 +8,13 @@
 #include "HCoilMiddlewareLib/HCoilMiddlewareLib.hpp"
 
 #define ONEMILLION 1000000
-#define WAITTIME 2
+#define WAITTIME 10
 using namespace cv;
 
 std::vector<std::pair<double,double>> readCSV(std::string filename);
 
 
 std::vector<std::pair<double,double>> readCSV(std::string filename){
-    std::cout << "Function called\n";
     std::vector<std::pair<double,double>> readValues;
 
     std::ifstream file(filename, std::ios::in);
@@ -39,9 +38,10 @@ std::vector<std::pair<double,double>> readCSV(std::string filename){
                 // std::cout << "value read: " << std::stod(word) << "\n";
                 value.second = std::stod(word);
             }
-            readValues.push_back(value);
             counter++;
         }
+        readValues.push_back(value);
+
     }
 
     return readValues;
@@ -116,8 +116,7 @@ int main(int argc, char* argv[]){
     std::cin.get();
 
     while(camera.IsGrabbing()){
-        outputFileName = "AlistairResults/" + expName + "step_" +  std::to_string(counter)  + 
-        "field_" + std::to_string(i) + ".png";
+        outputFileName = "AlistairResults/" + expName + "step_" +  std::to_string(counter)  + ".png";
         path = outputFileName.c_str();
         
         std::cout << "\n\n--------------------NEW ITERATION--------------------\n\n";
@@ -125,6 +124,14 @@ int main(int argc, char* argv[]){
         mid.set3DField(readValues[i].first, 0, readValues[i].second);
         i++;
         counter++;
+        if(counter > readValues.size()) {
+            mid.set3DField(0, 0, 0);
+            camera.RetrieveResult(5000, ptrGrabResult, Pylon::TimeoutHandling_ThrowException);
+            const uint8_t* pImageBuffer = (uint8_t*) ptrGrabResult->GetBuffer();
+            formatConverter.Convert(pylonImage, ptrGrabResult);
+            pylonImage.Save(png, path);
+            break;
+        }
         std::cout << "Field set. going to sleep for " << WAITTIME << " seconds\n";
         
         // Sleep for some time
