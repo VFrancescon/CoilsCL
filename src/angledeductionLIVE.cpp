@@ -51,7 +51,7 @@ int main(int argc, char* argv[]){
 
 
     int rcols, rrows;
-    rcols = pre_img.rows / 2;
+    rcols = pre_img.rows * 3 / 8;
     rrows = pre_img.cols * 3 / 8;
     
     
