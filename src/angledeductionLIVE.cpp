@@ -14,14 +14,11 @@ std::vector<Point> findJoints(Mat post_img_masked);
 int main(int argc, char* argv[]){
 
 
-    VideoCapture cap("/home/vittorio/coilsCL/BothRoutes_INOUT_V1.mp4");
-    if(!cap.isOpened()){
-	    std::cout << "Error opening video stream or file" << "\n";
-	    return -1;
-    }
+
 
     Mat pre_img, post_img, intr_mask;
-    cap >> pre_img;
+    
+    
 
     /*pylon video input here
     -----------------------------------------------------------*/
@@ -57,9 +54,13 @@ int main(int argc, char* argv[]){
     
     resize(pre_img, pre_img, Size(rrows, rcols), INTER_LINEAR);
 
+    camera.RetrieveResult(5000, ptrGrabResult, Pylon::TimeoutHandling_ThrowException);
+    const uint8_t* pImageBuffer = (uint8_t*) ptrGrabResult->GetBuffer();
+    formatConverter.Convert(pylonImage, ptrGrabResult);
+    pre_img = cv::Mat(ptrGrabResult->GetHeight(), ptrGrabResult->GetWidth(), CV_8UC3, (uint8_t *) pylonImage.GetBuffer());
     intr_mask = IntroducerMask(pre_img);
     int jointsCached = 0;
-    // while(true){
+    
     while(camera.IsGrabbing()){
         camera.RetrieveResult(5000, ptrGrabResult, Pylon::TimeoutHandling_ThrowException);
         const uint8_t* pImageBuffer = (uint8_t*) ptrGrabResult->GetBuffer();
@@ -86,26 +87,32 @@ int main(int argc, char* argv[]){
         }
 
         
-        // if(JointsObserved != jointsCached){
-        //     std::vector<double> angles;
+        if(JointsObserved != jointsCached){
+            std::vector<double> angles;
         //     std::vector<double> desiredAngles = {90,30, 50, 60, 80};
-        //     for(int i = 1; i < JointsObserved; i++){
-        //         if(Joints[i].y - Joints[i-1].y == 0) continue;
-        //         double ratio = ( Joints[i].x - Joints[i-1].x ) / ( Joints[i].y - Joints[i-1].y );
-        //         double theta = atan(ratio);
-        //         if(theta < 0) theta = M_PI_2 - abs(theta);
-        //         angles.push_back(theta * 180 / M_PI_2);
-        //     }
-        //     jointsCached = JointsObserved;
+            for(int i = 1; i < JointsObserved; i++){
+                if(Joints[i].y - Joints[i-1].y == 0) continue;
+                double ratio = ( Joints[i].x - Joints[i-1].x ) / ( Joints[i].y - Joints[i-1].y );
+                double theta = atan(ratio);
+                if(theta < 0) theta = M_PI_2 - abs(theta);
+                angles.push_back(theta * 180 / M_PI_2);
+            }
+            jointsCached = JointsObserved;
+            std::cout << "angles observed:";
+            for(auto i: angles) std::cout << " " << i << " ";
+        
+        
         //     std::vector<double> dAngleSlice = std::vector<double>(desiredAngles.begin(), desiredAngles.begin()+angles.size());         
         //     double error = meanError(dAngleSlice, angles);
         //     std::cout << "Error: " << error << "\n";
-        // }
+        }
         for(int i = 1; i < JointsObserved; i++){
             Rect recta(Joints[i], Joints[i-1]);
             rectangle(post_img, recta, Scalar(0,0,255), 1);
             line(post_img, Joints[i], Joints[i-1], Scalar(255,0,0), 1);
         }
+        
+
         imshow("Post", post_img);
         char c= (char)waitKey(1);
         if(c==27) break;
