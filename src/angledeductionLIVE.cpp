@@ -57,7 +57,7 @@ int main(int argc, char* argv[]){
         
         if(JointsObserved != jointsCached){
             std::vector<double> angles;
-            std::vector<double> desiredAngles = {90,30, 50, 60, 80};
+            std::vector<double> desiredAngles = {-10,-20,-30,-45,-30};
             for(int i = 1; i < JointsObserved; i++){
                 if(Joints[i].y - Joints[i-1].y == 0) continue;
                 double ratio = ( Joints[i].x - Joints[i-1].x ) / ( Joints[i].y - Joints[i-1].y );
@@ -66,9 +66,11 @@ int main(int argc, char* argv[]){
                 angles.push_back(theta * 180 / M_PI_2);
             }
             jointsCached = JointsObserved;
-            std::vector<double> dAngleSlice = std::vector<double>(desiredAngles.begin(), desiredAngles.begin()+angles.size());         
-            double error = meanError(dAngleSlice, angles);
-            std::cout << "Error: " << error << "\n";
+            if(jointsCached > 1) {
+                std::vector<double> dAngleSlice = std::vector<double>(desiredAngles.begin(), desiredAngles.begin()+angles.size());         
+                double error = meanError(dAngleSlice, angles);
+                std::cout << "Jointno: " << jointsCached << " Error: " << error << "\n";
+            }
         }
         for(int i = 1; i < JointsObserved; i++){
             Rect recta(Joints[i], Joints[i-1]);

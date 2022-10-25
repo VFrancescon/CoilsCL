@@ -6,8 +6,8 @@ int main(int argc, char* argv[]){
 
     //timesteps are equal to joint no
     int timesteps = jointEff;  
-
-
+    Vector3d reconciliationAngles = Vector3d{-90, 0, 90};
+    double EMulitplier = 14;
     /* * * * * * * * * * * * * * * * * * * * * * * * *
      * PRECOMPUTATION FOR EACH TIMESTEP BEGINS HERE  *
      *                                               *
@@ -16,10 +16,10 @@ int main(int argc, char* argv[]){
     std::vector<Vector3d> AppliedFields;
 
     std::vector<int> DesiredAngles(jointNo);
-    DesiredAngles[0] = 0;
-    DesiredAngles[1] = 10;
-    DesiredAngles[2] = 20;
-    DesiredAngles[3] = 30;
+    DesiredAngles[0] = 10;
+    DesiredAngles[1] = 20;
+    DesiredAngles[2] = 30;
+    DesiredAngles[3] = 45;
     DesiredAngles[4] = 30;
     DesiredAngles[jointEff] = 0;
 
@@ -44,7 +44,7 @@ int main(int argc, char* argv[]){
     for(int i = 0; i < iLinks.size(); i++){
         iLinks[i].dL = MechPpts.len;
         iLinks[i].d = MechPpts.d;
-        iLinks[i].E = MechPpts.E;
+        iLinks[i].E = MechPpts.E * EMulitplier;
         iLinks[i].v = MechPpts.v;
 
     }
@@ -76,14 +76,15 @@ int main(int argc, char* argv[]){
         AnglesStacked = AnglesStacked * M_PI / 180;
         MatrixXd LHS = KStacked * AnglesStacked;
 
-        MatrixXd partialDerivative = KStacked.inverse() * Jt * FieldMap;
+        // MatrixXd partialDerivative = KStacked.inverse() * Jt * FieldMap;
         // std::cout << "k: " << k << " Partial derivative\n" << partialDerivative << "\n\n";
         
         MatrixXd solution = RHS.completeOrthogonalDecomposition().solve(LHS);
 
-        solution(1) = ( solution(1) > 1e-12 ) ? solution(1) : 0;
         
-        AppliedFields.push_back(solution);
+        Vector3d field = RotateField(solution, reconciliationAngles);
+        if(field(2) < 1e-9) field(2) = 0;
+        AppliedFields.push_back(field);
         DesiredAngles.pop_back();
         Magnetisations.pop_back();
         pop_front(iJoints);
@@ -313,6 +314,26 @@ MatrixXd StackDiagonals(std::vector<Matrix3d> matrices){
 }
 
 
+
+
+
+
+/**
+ * @brief Explicit reimplementation or RotationZYX. Applies the same principle to rotate the applied field.
+ * Rotates field by Z and then X
+ * 
+ * @param field 3d vector containing applied field in all directions.
+ * @param rotationAngles Angles required to rotate, leave Y blank
+ * @return Vector3d 
+ */
+Vector3d RotateField(Vector3d field, Vector3d rotationAngles){
+    double AngleZ = rotationAngles(2) * M_PI / 180;
+    double AngleX = rotationAngles(0) * M_PI / 180;
+
+    return AngleAxisd(AngleZ, Vector3d::UnitZ()) 
+                * AngleAxisd(AngleX, Vector3d::UnitX()) * field;
+}
+
 /**
  * @brief Utility Function. Rotates matrix src by angles in vector jointAngles in the ZYX order.
  * 
@@ -329,3 +350,4 @@ Matrix3d RotationZYX(Matrix3d src, Vector3d jointAngles){
 		* AngleAxisd(AngleY, Vector3d::UnitY())
 		* AngleAxisd(AngleX, Vector3d::UnitX());
 }
+

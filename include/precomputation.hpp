@@ -39,5 +39,7 @@ Matrix3d RotationZYX(Matrix3d src, Vector3d jointAngles);
 Matrix3d SkewMatrix(Vector3d src);
 MatrixXd VerticalStack(MatrixXd M1, MatrixXd M2);
 VectorXd StackAngles(std::vector<Joint>& iJoints);
+Vector3d RotateField(Vector3d field, Vector3d rotationAngles);
+
 
 int main(int argc, char* argv[]);
