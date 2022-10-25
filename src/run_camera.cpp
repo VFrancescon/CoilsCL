@@ -34,7 +34,7 @@ int main(int argc, char* argv[]){
     //             Size(img.rows / 2, img.cols * 3 / 8));
 
     //resizing the image for faster processing
-    int rows = img.rows / 2;
+    int rows = img.rows * 3 / 8;
     int cols = img.cols * 3 / 8; 
     resize(img, img, Size(rows, cols), INTER_LINEAR);
 

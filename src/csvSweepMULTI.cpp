@@ -52,7 +52,6 @@ std::vector<std::pair<double,double>> readCSV(std::string filename){
 
 
 int main(int argc, char* argv[]){
-    if(argc  > 1) {
         
     /***************************
     INITIALISING THE MIDDLEWARE HERE, DO NOT TOUCH
@@ -107,24 +106,70 @@ int main(int argc, char* argv[]){
 
 
     //reading csv here
-    std::string inputPath;
-    if(argc > 3) inputPath = argv[2];
-    else inputPath = "../Angles.csv";
-    std::vector<std::pair<double,double>> readValues = readCSV(inputPath);
+    std::string inputPath1 = "../Angles1.csv";
+    std::vector<std::pair<double,double>> readValues1 = readCSV(inputPath1);
+
+    std::string inputPath2 = "../Angles2.csv";
+    std::vector<std::pair<double,double>> readValues2 = readCSV(inputPath2);
+
+    std::string inputPath3 = "../Angles3.csv";
+    std::vector<std::pair<double,double>> readValues3 = readCSV(inputPath3);
 
     std::cout << "Initialisation complete. Press Enter to begin.";
     std::cin.get();
+
+    int size1, size2, size3;
+    size1 = readValues1.size();
+    size2 = readValues2.size();
+    size3 = readValues3.size();
 
     while(camera.IsGrabbing()){
         outputFileName = "AlistairResults/" + expName + "step_" +  std::to_string(counter)  + ".png";
         path = outputFileName.c_str();
         
-        std::cout << "\n\n--------------------NEW ITERATION--------------------\n\n";
-        std::cout << "Setting field to " << readValues[i].first << "," << 0 << "," << readValues[i].second << "\n";
-        mid.set3DField(readValues[i].first, 0, readValues[i].second);
-        i++;
+    
         counter++;
-        if(counter > readValues.size()) {
+        std::cout << "First dataset\n";
+        for(auto k: readValues1){
+            // Take a snapshot from the camera
+            mid.set3DField(k.first, 0, k.second);
+            camera.RetrieveResult(5000, ptrGrabResult, Pylon::TimeoutHandling_ThrowException);
+            const uint8_t* pImageBuffer = (uint8_t*) ptrGrabResult->GetBuffer();
+            formatConverter.Convert(pylonImage, ptrGrabResult);
+            pylonImage.Save(png, path);
+            std::cout << "Picture saved. Moving onto next iteration\n";
+            usleep(WAITTIME * ONEMILLION);
+        }
+
+        std::cout << "Press enter to move onto second dataset.";
+        std::cin.get();
+
+        for(auto k: readValues2){
+            mid.set3DField(k.first, 0, k.second);
+            // Take a snapshot from the camera
+            camera.RetrieveResult(5000, ptrGrabResult, Pylon::TimeoutHandling_ThrowException);
+            const uint8_t* pImageBuffer = (uint8_t*) ptrGrabResult->GetBuffer();
+            formatConverter.Convert(pylonImage, ptrGrabResult);
+            pylonImage.Save(png, path);
+            std::cout << "Picture saved. Moving onto next iteration\n";
+            usleep(WAITTIME * ONEMILLION);
+        }
+
+        std::cout << "Press enter to move onto third dataset.";
+        std::cin.get();
+
+        for(auto k: readValues3){
+            mid.set3DField(k.first, 0, k.second);
+            // Take a snapshot from the camera
+            camera.RetrieveResult(5000, ptrGrabResult, Pylon::TimeoutHandling_ThrowException);
+            const uint8_t* pImageBuffer = (uint8_t*) ptrGrabResult->GetBuffer();
+            formatConverter.Convert(pylonImage, ptrGrabResult);
+            pylonImage.Save(png, path);
+            std::cout << "Picture saved. Moving onto next iteration\n";
+            usleep(WAITTIME * ONEMILLION);
+        }
+
+        if(counter > (size1 + size2 + size3 ) ) {
             mid.set3DField(0, 0, 0);
             camera.RetrieveResult(5000, ptrGrabResult, Pylon::TimeoutHandling_ThrowException);
             const uint8_t* pImageBuffer = (uint8_t*) ptrGrabResult->GetBuffer();
@@ -132,23 +177,10 @@ int main(int argc, char* argv[]){
             pylonImage.Save(png, path);
             break;
         }
-        std::cout << "Field set. going to sleep for " << WAITTIME << " seconds\n";
-        
-        // Sleep for some time
-        usleep(WAITTIME * ONEMILLION);
-
-        // Take a snapshot from the camera
-        camera.RetrieveResult(5000, ptrGrabResult, Pylon::TimeoutHandling_ThrowException);
-        const uint8_t* pImageBuffer = (uint8_t*) ptrGrabResult->GetBuffer();
-        formatConverter.Convert(pylonImage, ptrGrabResult);
-        pylonImage.Save(png, path);
-        std::cout << "Picture saved. Moving onto next iteration\n";
-        
+    
     }
     mid.~MiddlewareLayer();
     Pylon::PylonTerminate();
-    }
 
-    std::cout << "No arguments were given. Try again giving one argument for the experiment name and one for the csv path\n";
     return 0;
 }
