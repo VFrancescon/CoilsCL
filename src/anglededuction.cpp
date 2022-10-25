@@ -5,10 +5,6 @@ int threshold_high = 255;
 std::string pre_img_path = "/home/vittorio/coilsCL/imgs/Pre_Insertion_IMG.png";
 std::string post_img_path = "/home/vittorio/coilsCL/imgs/Post_Insertion_IMG.png";
 
-bool xWiseSort(Point lhs, Point rhs){
-    return (lhs.x < rhs.x);
-}
-
 std::vector<Point> findJoints(Mat pre_img, Mat post_img);
 double meanError(std::vector<double> &desired, std::vector<double> &observed);
 

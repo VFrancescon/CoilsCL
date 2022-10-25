@@ -3,10 +3,6 @@
 int threshold_low = 89;
 int threshold_high = 255;
 
-bool xWiseSort(Point lhs, Point rhs){
-    return (lhs.x < rhs.x);
-}
-
 double meanError(std::vector<double> &desired, std::vector<double> &observed);
 
 std::vector<Point> findJoints(Mat post_img_masked);

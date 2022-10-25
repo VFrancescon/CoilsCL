@@ -49,12 +49,21 @@ int main(int argc, char* argv[]){
         {
             break;
         }
-        rows = img.rows / 2;
-        cols = img.cols * 3 / 8;
         
         //make image smaller 
         resize(img, img, Size(rows, cols), INTER_LINEAR);
+        line( img, Point(0, rows/3), Point(cols, rows/3), Scalar(255,255,255) ); //vertical lines
+        line( img, Point(0, rows*2/3), Point(cols, rows/3*2), Scalar(255,255,255) );
 
+        line( img, Point(cols/3, 0), Point(rows, cols/3), Scalar(255,255,255) ); //horizontal lines
+        line( img, Point(cols*2/3), Point(rows, cols*2/3), Scalar(255,255,255) );
+
+        //crosshair
+        line(img, Point(cols/2-10, rows/2), Point(cols/2+10, rows/2), Scalar(255,255,255));
+        line(img, Point(cols/2, rows/2-10), Point(cols/2, rows/2+10), Scalar(255,255,255));
+
+        
+        Point p = Point(30,30);
         imshow("Camera Feed", img);
         char c= (char)waitKey(1);
         if(c==27) break;

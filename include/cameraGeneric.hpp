@@ -11,5 +11,13 @@ using namespace cv;
 
 Mat IntroducerMask(Mat src);
 
+bool xWiseSort(Point lhs, Point rhs){
+    return (lhs.x < rhs.x);
+}
+
+bool yWiseSort(Point lhs, Point rhs){
+    return (lhs.y < rhs.y);
+}
+
 int main(int argc, char* argv[]);
 
