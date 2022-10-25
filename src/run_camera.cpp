@@ -52,15 +52,15 @@ int main(int argc, char* argv[]){
         
         //make image smaller 
         resize(img, img, Size(rows, cols), INTER_LINEAR);
-        line( img, Point(0, rows/3), Point(cols, rows/3), Scalar(255,255,255) ); //vertical lines
-        line( img, Point(0, rows*2/3), Point(cols, rows/3*2), Scalar(255,255,255) );
+        line( img, Point(0, cols/3), Point(rows, cols/3), Scalar(0,0,0) ); //horizontal lines
+        line( img, Point(0, cols*2/3), Point(rows, cols/3*2), Scalar(0,0,0) );
 
-        line( img, Point(cols/3, 0), Point(rows, cols/3), Scalar(255,255,255) ); //horizontal lines
-        line( img, Point(cols*2/3), Point(rows, cols*2/3), Scalar(255,255,255) );
+        line( img, Point(rows/3, 0), Point(rows/3, cols), Scalar(0,0,0) ); //horizontal lines
+        line( img, Point(rows*2/3), Point(rows*2/3, cols), Scalar(0,0,0) );
 
         //crosshair
-        line(img, Point(cols/2-10, rows/2), Point(cols/2+10, rows/2), Scalar(255,255,255));
-        line(img, Point(cols/2, rows/2-10), Point(cols/2, rows/2+10), Scalar(255,255,255));
+        line(img, Point(rows/2-20, cols/2), Point(rows/2+20, cols/2), Scalar(0,0,0));
+        line(img, Point(rows/2, cols/2-20), Point(rows/2, cols/2+20), Scalar(0,0,0));
 
         
         Point p = Point(30,30);
