@@ -1,6 +1,6 @@
 #include <cameraGeneric.hpp>
 
-int threshold_low = 89;
+int threshold_low = 100;
 int threshold_high = 255;
 
 double meanError(std::vector<double> &desired, std::vector<double> &observed);
@@ -48,15 +48,15 @@ int main(int argc, char* argv[]){
     rrows = pre_img.cols * 3 / 8;
     
     
-    resize(pre_img, pre_img, Size(rrows, rcols), INTER_LINEAR);
+    // resize(pre_img, pre_img, Size(rrows, rcols), INTER_LINEAR);
 
-    camera.RetrieveResult(5000, ptrGrabResult, Pylon::TimeoutHandling_ThrowException);
-    const uint8_t* pImageBuffer = (uint8_t*) ptrGrabResult->GetBuffer();
-    formatConverter.Convert(pylonImage, ptrGrabResult);
-    pre_img = cv::Mat(ptrGrabResult->GetHeight(), ptrGrabResult->GetWidth(), CV_8UC3, (uint8_t *) pylonImage.GetBuffer());
-    intr_mask = IntroducerMask(pre_img);
+    // camera.RetrieveResult(5000, ptrGrabResult, Pylon::TimeoutHandling_ThrowException);
+    // const uint8_t* pImageBuffer = (uint8_t*) ptrGrabResult->GetBuffer();
+    // formatConverter.Convert(pylonImage, ptrGrabResult);
+    // pre_img = cv::Mat(ptrGrabResult->GetHeight(), ptrGrabResult->GetWidth(), CV_8UC3, (uint8_t *) pylonImage.GetBuffer());
+    // intr_mask = IntroducerMask(pre_img);
     int jointsCached = 0;
-    
+    int k = 0;
     while(camera.IsGrabbing()){
         camera.RetrieveResult(5000, ptrGrabResult, Pylon::TimeoutHandling_ThrowException);
         const uint8_t* pImageBuffer = (uint8_t*) ptrGrabResult->GetBuffer();
@@ -71,46 +71,54 @@ int main(int argc, char* argv[]){
         Mat post_img_grey, post_img_th, post_img_masked;
 
         cvtColor(post_img, post_img_grey, COLOR_BGR2GRAY);
-        threshold(post_img_grey, post_img_th, 50, 250, THRESH_BINARY_INV);
-        post_img_th.copyTo(post_img_masked, intr_mask);
+        threshold(post_img_grey, post_img_th, threshold_low, threshold_high, THRESH_BINARY_INV);
+        Mat element = getStructuringElement(MORPH_DILATE, Size(5,5) );
+        dilate(post_img_th, post_img_th, element);
+        // post_img_th.copyTo(post_img_masked);
+        post_img_masked = post_img_th;
 
         std::vector<Point> Joints;
         Joints = findJoints(post_img_masked);
         int JointsObserved = Joints.size();
+        // drawContours(post_img_masked, Joints, -1, Scalar(255,0,0), FILLED, LINE_8);
 
         for(auto i: Joints){
             circle(post_img, i, 4, Scalar(255,0,0), FILLED);        
         }
 
         
-        if(JointsObserved != jointsCached){
-            std::vector<double> angles;
-        //     std::vector<double> desiredAngles = {90,30, 50, 60, 80};
-            for(int i = 1; i < JointsObserved; i++){
-                if(Joints[i].y - Joints[i-1].y == 0) continue;
-                double ratio = ( Joints[i].x - Joints[i-1].x ) / ( Joints[i].y - Joints[i-1].y );
-                double theta = atan(ratio);
-                if(theta < 0) theta = M_PI_2 - abs(theta);
-                angles.push_back(theta * 180 / M_PI_2);
-            }
-            jointsCached = JointsObserved;
-            std::cout << "angles observed:";
-            for(auto i: angles) std::cout << " " << i << " ";
+        // if(JointsObserved != jointsCached){
+        std::vector<double> angles;
+    //     std::vector<double> desiredAngles = {90,30, 50, 60, 80};
+        for(int i = 1; i < JointsObserved; i++){
+            if(Joints[i].y - Joints[i-1].y == 0) continue;
+            double ratio = ( Joints[i].x - Joints[i-1].x ) / ( Joints[i].y - Joints[i-1].y );
+            double theta = atan(ratio);
+            if(theta < 0) theta = M_PI_2 - abs(theta);
+            angles.push_back(theta * 180 / M_PI_2);
+        }
+        jointsCached = JointsObserved;
+        std::cout << "angles observed:";
+        for(auto i: angles) std::cout << " " << i << " ";
+        std::cout << "\n";
+        
+        
         
         
         //     std::vector<double> dAngleSlice = std::vector<double>(desiredAngles.begin(), desiredAngles.begin()+angles.size());         
         //     double error = meanError(dAngleSlice, angles);
         //     std::cout << "Error: " << error << "\n";
-        }
-        for(int i = 1; i < JointsObserved; i++){
-            Rect recta(Joints[i], Joints[i-1]);
-            rectangle(post_img, recta, Scalar(0,0,255), 1);
-            line(post_img, Joints[i], Joints[i-1], Scalar(255,0,0), 1);
-        }
+        // }
+        // for(int i = 1; i < JointsObserved; i++){
+        //     Rect recta(Joints[i], Joints[i-1]);
+        //     rectangle(post_img, recta, Scalar(0,0,255), 1);
+        //     line(post_img, Joints[i], Joints[i-1], Scalar(255,0,0), 1);
+        // }
         
 
         imshow("Post", post_img);
-        char c= (char)waitKey(1);
+        imshow("Th", post_img_masked);
+        char c= (char)waitKey(1e3);
         if(c==27) break;
         
     }
@@ -168,7 +176,7 @@ std::vector<Point> findJoints(Mat post_img_masked){
     std::sort(cntLine.begin(), cntLine.end(), xWiseSort);
     std::reverse(cntLine.begin(), cntLine.end());
     
-    int link_lenght = 100;
+    int link_lenght = 50;
     std::vector<Point> Joints;
     int jointCount = (int) cntLine.size() / link_lenght;
     if(jointCount){
