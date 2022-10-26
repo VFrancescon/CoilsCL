@@ -35,12 +35,10 @@ double meanError(std::vector<double> &desired, std::vector<double> &observed){
     return error;
 }
 
-std::vector<Point> findJoints(Mat post_img_masked){
+std::vector<Point> findJoints(Mat post_img_masked, std::vector<std::vector<Point> > &contours){
     
 
     Mat contours_bin;
-
-    std::vector<std::vector<Point> > contours;
     std::vector<Vec4i> hierarchy;
     //find contours, ignore hierarchy
     findContours(post_img_masked, contours, hierarchy, RETR_LIST, CHAIN_APPROX_SIMPLE);
@@ -196,12 +194,15 @@ int main(int argc, char* argv[]){
         post_img_th.copyTo(post_img_masked, intr_mask);
 
         std::vector<Point> Joints;
-        Joints = findJoints(post_img_masked);
+        std::vector<std::vector<Point> > contours;
+
+        Joints = findJoints(post_img_masked, contours);
         int JointsObserved = Joints.size();
 
         for(auto i: Joints){
             circle(post_img, i, 4, Scalar(255,0,0), FILLED);        
         }
+        drawContours(post_img, contours, -1, Scalar(255,255,0));
 
         
         if(JointsObserved != jointsCached){
