@@ -1,7 +1,7 @@
 #include "cameraGeneric.hpp"
 #include "precomputation.hpp"
 
-int threshold_low = 89;
+int threshold_low = 95;
 int threshold_high = 255;
 
 Mat IntroducerMask(Mat src){
@@ -35,10 +35,11 @@ double meanError(std::vector<double> &desired, std::vector<double> &observed){
     return error;
 }
 
-std::vector<Point> findJoints(Mat post_img_masked, std::vector<std::vector<Point> > &contours){
+std::vector<Point> findJoints(Mat post_img_masked, std::vector<std::vector<Point>> &contours){
     
 
     Mat contours_bin;
+    // std::vector<std::vector<Point> > contours;
     std::vector<Vec4i> hierarchy;
     //find contours, ignore hierarchy
     findContours(post_img_masked, contours, hierarchy, RETR_LIST, CHAIN_APPROX_SIMPLE);
@@ -59,11 +60,13 @@ std::vector<Point> findJoints(Mat post_img_masked, std::vector<std::vector<Point
     std::vector<Point> cntLine;
     findNonZero(skeleton, cntLine);
     std::sort(cntLine.begin(), cntLine.end(), yWiseSort);
-    std::reverse(cntLine.begin(), cntLine.end());
+    // std::reverse(cntLine.begin(), cntLine.end());
     
-    int link_lenght = 100;
+    int link_lenght = 70;
     std::vector<Point> Joints;
     int jointCount = (int) cntLine.size() / link_lenght;
+    
+    
     if(jointCount){
         for(int i = 0; i < jointCount; i++){
             Joints.push_back(cntLine[link_lenght*(i)]);
@@ -73,13 +76,8 @@ std::vector<Point> findJoints(Mat post_img_masked, std::vector<std::vector<Point
     return Joints;
 }
 
-
-
-
-
 void adjustStiffness(std::vector<Link> &iLinks, double EMulitplier);
-Vector3d CalculateField(std::vector<Link> &iLinks, std::vector<Joint> &iJoints, 
-    std::vector<PosOrientation> &iPosVec);
+Vector3d CalculateField(std::vector<Link> &iLinks, std::vector<Joint> &iJoints, std::vector<PosOrientation> &iPosVec);
 
 int main(int argc, char* argv[]){
     int jointEff = 5;
@@ -150,6 +148,7 @@ int main(int argc, char* argv[]){
     Pylon::CIntegerParameter width     ( camera.GetNodeMap(), "Width");
     Pylon::CIntegerParameter height    ( camera.GetNodeMap(), "Height");
     Pylon::CEnumParameter pixelFormat  ( camera.GetNodeMap(), "PixelFormat");
+    Pylon::CFloatParameter(camera.GetNodeMap(), "ExposureTime").SetValue(20000.0);
     Size frameSize= Size((int)width.GetValue(), (int)height.GetValue());
     int codec = VideoWriter::fourcc('M', 'J', 'P', 'G');
     width.TrySetValue(640*3, Pylon::IntegerValueCorrection_Nearest);
