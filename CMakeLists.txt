@@ -51,6 +51,8 @@ add_executable(LIVEangles "src/angledeductionLIVE.cpp")
 add_executable(csvSweep "src/csvSweep.cpp")
 add_executable(csvSweepM "src/csvSweepMULTI.cpp")
 add_executable(controllerPrototype "src/ControllerPrototype.cpp")
+add_executable( th_cal "src/thresholds_cal.cpp")
+
 
 ## Link the libraries frim S3 here
 target_link_libraries( main ${MiddlewareLibs})
@@ -66,3 +68,4 @@ target_link_libraries( LIVEangles ${EIGEN} ${VisionLibs})
 target_link_libraries( csvSweep ${VisionLibs} ${MiddlewareLibs})
 target_link_libraries( csvSweepM ${VisionLibs} ${MiddlewareLibs})
 target_link_libraries( controllerPrototype ${EIGEN} ${VisionLibs} ${MiddlewareLibs})
+target_link_libraries( th_cal ${VisionLibs})

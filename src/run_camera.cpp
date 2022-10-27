@@ -17,6 +17,11 @@ int main(int argc, char* argv[]){
     Pylon::CIntegerParameter width     ( camera.GetNodeMap(), "Width");
     Pylon::CIntegerParameter height    ( camera.GetNodeMap(), "Height");
     Pylon::CEnumParameter pixelFormat  ( camera.GetNodeMap(), "PixelFormat");
+    
+    Pylon::CFloatParameter(camera.GetNodeMap(), "ExposureTime").SetValue(20000.0);
+    
+    
+    
     Size frameSize= Size((int)width.GetValue(), (int)height.GetValue());
     int codec = VideoWriter::fourcc('M', 'J', 'P', 'G');
     width.TrySetValue(640*3, Pylon::IntegerValueCorrection_Nearest);
@@ -34,8 +39,8 @@ int main(int argc, char* argv[]){
     //             Size(img.rows / 2, img.cols * 3 / 8));
 
     //resizing the image for faster processing
-    int rows = img.rows * 3 / 8;
-    int cols = img.cols * 3 / 8; 
+    int rows = img.rows / 2;
+    int cols = img.cols / 2; 
     resize(img, img, Size(rows, cols), INTER_LINEAR);
 
     while(camera.IsGrabbing()){
