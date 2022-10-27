@@ -1,11 +1,11 @@
 #include <cameraGeneric.hpp>
 
-int threshold_low = 100;
+int threshold_low = 95;
 int threshold_high = 255;
 
 double meanError(std::vector<double> &desired, std::vector<double> &observed);
 
-std::vector<Point> findJoints(Mat post_img_masked);
+std::vector<Point> findJoints(Mat post_img_masked, std::vector<std::vector<Point>> &contours);
 
 int main(int argc, char* argv[]){
 
@@ -13,7 +13,7 @@ int main(int argc, char* argv[]){
 
 
     Mat pre_img, post_img, intr_mask;
-    
+    pre_img = imread("../IntrPicture.png", IMREAD_COLOR);
     
 
     /*pylon video input here
@@ -35,17 +35,17 @@ int main(int argc, char* argv[]){
     Pylon::EPixelType pixelType = pixelTypeMapper.GetPylonPixelTypeFromNodeValue(pixelFormat.GetIntValue());
     camera.StartGrabbing(Pylon::GrabStrategy_LatestImageOnly);
     Pylon::CGrabResultPtr ptrGrabResult;
-    camera.RetrieveResult(5000, ptrGrabResult, Pylon::TimeoutHandling_ThrowException);
-    const uint8_t* preImageBuffer = (uint8_t*) ptrGrabResult->GetBuffer();
-    formatConverter.Convert(pylonImage, ptrGrabResult);
-    pre_img = cv::Mat(ptrGrabResult->GetHeight(), ptrGrabResult->GetWidth(), CV_8UC3, (uint8_t *) pylonImage.GetBuffer());
+    // camera.RetrieveResult(5000, ptrGrabResult, Pylon::TimeoutHandling_ThrowException);
+    // const uint8_t* preImageBuffer = (uint8_t*) ptrGrabResult->GetBuffer();
+    // formatConverter.Convert(pylonImage, ptrGrabResult);
+    // pre_img = cv::Mat(ptrGrabResult->GetHeight(), ptrGrabResult->GetWidth(), CV_8UC3, (uint8_t *) pylonImage.GetBuffer());
     /*-----------------------------------------------------------
     pylon video input here*/
 
 
     int rcols, rrows;
-    rcols = pre_img.rows * 3 / 8;
-    rrows = pre_img.cols * 3 / 8;
+    rcols = pre_img.rows;
+    rrows = pre_img.cols;
     
     
     // resize(pre_img, pre_img, Size(rrows, rcols), INTER_LINEAR);
@@ -54,7 +54,7 @@ int main(int argc, char* argv[]){
     // const uint8_t* pImageBuffer = (uint8_t*) ptrGrabResult->GetBuffer();
     // formatConverter.Convert(pylonImage, ptrGrabResult);
     // pre_img = cv::Mat(ptrGrabResult->GetHeight(), ptrGrabResult->GetWidth(), CV_8UC3, (uint8_t *) pylonImage.GetBuffer());
-    // intr_mask = IntroducerMask(pre_img);
+    intr_mask = IntroducerMask(pre_img);
     int jointsCached = 0;
     int k = 0;
     while(camera.IsGrabbing()){
@@ -71,16 +71,16 @@ int main(int argc, char* argv[]){
         Mat post_img_grey, post_img_th, post_img_masked;
 
         cvtColor(post_img, post_img_grey, COLOR_BGR2GRAY);
+        blur(post_img_grey, post_img_grey, Size(5,5));
         threshold(post_img_grey, post_img_th, threshold_low, threshold_high, THRESH_BINARY_INV);
-        Mat element = getStructuringElement(MORPH_DILATE, Size(5,5) );
-        dilate(post_img_th, post_img_th, element);
-        // post_img_th.copyTo(post_img_masked);
-        post_img_masked = post_img_th;
+        post_img_th.copyTo(post_img_masked);
+        // post_img_masked = post_img_th;
 
         std::vector<Point> Joints;
-        Joints = findJoints(post_img_masked);
+        std::vector<std::vector<Point>> contours;
+        Joints = findJoints(post_img_masked, contours);
         int JointsObserved = Joints.size();
-        // drawContours(post_img_masked, Joints, -1, Scalar(255,0,0), FILLED, LINE_8);
+        drawContours(post_img, contours, -1, Scalar(255,0,0), FILLED, LINE_8);
 
         for(auto i: Joints){
             circle(post_img, i, 4, Scalar(255,0,0), FILLED);        
@@ -91,10 +91,19 @@ int main(int argc, char* argv[]){
         std::vector<double> angles;
     //     std::vector<double> desiredAngles = {90,30, 50, 60, 80};
         for(int i = 1; i < JointsObserved; i++){
-            if(Joints[i].y - Joints[i-1].y == 0) continue;
-            double ratio = ( Joints[i].x - Joints[i-1].x ) / ( Joints[i].y - Joints[i-1].y );
-            double theta = atan(ratio);
-            if(theta < 0) theta = M_PI_2 - abs(theta);
+            double theta, dx, dy;
+            if(Joints[i].y - Joints[i-1].y == 0) theta = 0;
+            else {
+                dx = (double) Joints[i].x - Joints[i-1].x;
+                dy = (double) Joints[i].y - Joints[i-1].y;
+                double ratio = dx / dy;
+                theta = atan(ratio);
+                }
+            if(theta > 0) theta = M_PI_2 - abs(theta);
+            std::cout << "i: " << i << " x,y: " << Joints[i].x << " " << Joints[i].y << 
+            " x,y previous " << Joints[i-1].x << " " << Joints[i-1].y << "\n";
+            std::cout << "dx " << Joints[i].x - Joints[i-1].x << " dy " << Joints[i].y - Joints[i-1].y << "\n";
+            std::cout << "ratio: " << dx/dy << "\n";
             angles.push_back(theta * 180 / M_PI_2);
         }
         jointsCached = JointsObserved;
@@ -109,15 +118,16 @@ int main(int argc, char* argv[]){
         //     double error = meanError(dAngleSlice, angles);
         //     std::cout << "Error: " << error << "\n";
         // }
-        // for(int i = 1; i < JointsObserved; i++){
-        //     Rect recta(Joints[i], Joints[i-1]);
-        //     rectangle(post_img, recta, Scalar(0,0,255), 1);
-        //     line(post_img, Joints[i], Joints[i-1], Scalar(255,0,0), 1);
-        // }
+        for(int i = 1; i < JointsObserved; i++){
+            Rect recta(Joints[i], Joints[i-1]);
+            rectangle(post_img, recta, Scalar(0,0,255), 1);
+            line(post_img, Joints[i], Joints[i-1], Scalar(255,0,0), 1);
+        }
         
 
         imshow("Post", post_img);
-        imshow("Th", post_img_masked);
+        // imshow("Th", post_img_masked);
+        // imshow("Mask", intr_mask);
         char c= (char)waitKey(1e3);
         if(c==27) break;
         
@@ -148,12 +158,12 @@ Mat IntroducerMask(Mat src){
 
 }
 
-std::vector<Point> findJoints(Mat post_img_masked){
+std::vector<Point> findJoints(Mat post_img_masked, std::vector<std::vector<Point>> &contours){
     
 
     Mat contours_bin;
 
-    std::vector<std::vector<Point> > contours;
+    // std::vector<std::vector<Point> > contours;
     std::vector<Vec4i> hierarchy;
     //find contours, ignore hierarchy
     findContours(post_img_masked, contours, hierarchy, RETR_LIST, CHAIN_APPROX_SIMPLE);
@@ -173,34 +183,19 @@ std::vector<Point> findJoints(Mat post_img_masked){
 
     std::vector<Point> cntLine;
     findNonZero(skeleton, cntLine);
-    std::sort(cntLine.begin(), cntLine.end(), xWiseSort);
-    std::reverse(cntLine.begin(), cntLine.end());
+    std::sort(cntLine.begin(), cntLine.end(), yWiseSort);
+    // std::reverse(cntLine.begin(), cntLine.end());
     
-    int link_lenght = 50;
+    int link_lenght = 70;
     std::vector<Point> Joints;
     int jointCount = (int) cntLine.size() / link_lenght;
+    
+    
     if(jointCount){
         for(int i = 0; i < jointCount; i++){
             Joints.push_back(cntLine[link_lenght*(i)]);
         }
     }
-
-    Point endpoint;
-
-    //iterate over all points
-    // for(auto i: cntLine){
-    //     int neighbor_counter = 0;
-    //     for(int j = -1; j < 2; j++){
-    //         for(int k = -1; k < 2; k++){
-    //             if(j == 0 && k == 0) continue;
-    //             //count neighbors immediately adjecent
-    //             if( (int) skeleton.at<uchar>(i.y+k, i.x+j) > 0  ) neighbor_counter++;
-    //         }
-    //     }
-    //     //last point to measure 1 neighbor exactly must be the end of the line
-    //     if(neighbor_counter == 1) endpoint = i;
-    // }
-    // Joints.push_back(endpoint);
 
     return Joints;
 }

@@ -16,7 +16,7 @@ bool xWiseSort(Point lhs, Point rhs){
 }
 
 bool yWiseSort(Point lhs, Point rhs){
-    return (lhs.y < rhs.y);
+    return (lhs.y > rhs.y);
 }
 
 int main(int argc, char* argv[]);

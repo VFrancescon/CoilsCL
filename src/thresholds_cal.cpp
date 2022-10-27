@@ -91,7 +91,7 @@ int main(int argc, char* argv[])
             break;
         }
         
-        int rows = frame.rows / 2;
+        int rows = frame.rows * 3 / 8;
         int cols = frame.cols * 3 / 8; 
         // make image smaller 
         resize(frame, frame, Size(rows, cols), INTER_LINEAR);
