@@ -66,6 +66,33 @@ int main(int argc, char* argv[]){
     resize(pre_img, pre_img, Size(rcols, rrows), INTER_LINEAR);
     intr_mask = IntroducerMask(pre_img);
 
+    AStar::Vec2i origin, destination, wordlsize;
+    wordlsize.x = pre_img.rows;
+    wordlsize.y = pre_img.cols;
+
+    AStar::Generator generator;
+    generator.setWorldSize(wordlsize);
+    generator.setHeuristic(AStar::Heuristic::euclidean);
+    generator.setDiagonalMovement(true);
+    Point goal1(60,60);
+
+
+    /**
+     * How to use the A-star pathfinding
+     * 
+     * starting_point = origin
+     * destination = goal
+     * AStar::CoordinateList path = generator.findPath(origin, destination);
+     * std::vector<Point> cvPath = AStar::Vec2iToCvPointList(path);
+     *      std::vector<Point> goalPath;
+            for(auto i: path){
+                goalPath.push_back(Point(i.x, i.y));
+            }
+            for(auto i: goalPath){
+                circle(img, i, 2, Scalar(255,0,0), FILLED);
+            }
+     */
+
 
     MiddlewareLayer mid;
     std::cout << "Everything initialised properly. Press enter to begin.";

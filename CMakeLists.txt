@@ -22,13 +22,14 @@ find_library(PSU  DxkdpLib )
 find_library(LINACT LinActuatorLib )
 find_library(TMETER LakeshoreF71Lib )
 find_library(SERIAL CppLinuxSerial )
+find_library( ASTAR a-star)
 
 ## S3: Set variables for library linkage. Use one of the below only
 set(MiddlewareLibs ${MID} ${PSU} ${LINACT} ${TMETER} ${SERIAL} Threads::Threads)
 set(PSULibs ${PSU} ${SERIAL})
 set(LinActLibs ${LINACT} ${SERIAL})
 set(TmeterLibs ${TMETER} ${SERIAL})
-set(VisionLibs ${Pylon_LIBRARIES} ${OpenCV_LIBS})
+set(VisionLibs ${Pylon_LIBRARIES} ${OpenCV_LIBS} ${ASTAR})
 set(EIGEN Eigen3::Eigen)
 set(THREADS Threads::Threads)
 
