@@ -24,8 +24,8 @@ int main(int argc, char* argv[]){
     
     Size frameSize= Size((int)width.GetValue(), (int)height.GetValue());
     int codec = VideoWriter::fourcc('M', 'J', 'P', 'G');
-    width.TrySetValue(640*3, Pylon::IntegerValueCorrection_Nearest);
-    height.TrySetValue(480*3, Pylon::IntegerValueCorrection_Nearest);
+    width.TrySetValue(1920, Pylon::IntegerValueCorrection_Nearest);
+    height.TrySetValue(1216, Pylon::IntegerValueCorrection_Nearest);
     Pylon::CPixelTypeMapper pixelTypeMapper( &pixelFormat);
     Pylon::EPixelType pixelType = pixelTypeMapper.GetPylonPixelTypeFromNodeValue(pixelFormat.GetIntValue());
     camera.StartGrabbing(Pylon::GrabStrategy_LatestImageOnly);
@@ -57,6 +57,7 @@ int main(int argc, char* argv[]){
         
         //make image smaller 
         resize(img, img, Size(rows, cols), INTER_LINEAR);
+        flip(img, img, 1);
         line( img, Point(0, cols/3), Point(rows, cols/3), Scalar(0,0,0) ); //horizontal lines
         line( img, Point(0, cols*2/3), Point(rows, cols/3*2), Scalar(0,0,0) );
 

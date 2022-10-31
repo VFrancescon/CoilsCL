@@ -52,7 +52,7 @@ add_executable(csvSweep "src/csvSweep.cpp")
 add_executable(csvSweepM "src/csvSweepMULTI.cpp")
 add_executable(controllerPrototype "src/ControllerPrototype.cpp")
 add_executable( th_cal "src/thresholds_cal.cpp")
-
+add_executable( demo_0111 "src/csv_Step_Introducer.cpp")
 
 ## Link the libraries frim S3 here
 target_link_libraries( main ${MiddlewareLibs})
@@ -69,3 +69,4 @@ target_link_libraries( csvSweep ${VisionLibs} ${MiddlewareLibs})
 target_link_libraries( csvSweepM ${VisionLibs} ${MiddlewareLibs})
 target_link_libraries( controllerPrototype ${EIGEN} ${VisionLibs} ${MiddlewareLibs})
 target_link_libraries( th_cal ${VisionLibs})
+target_link_libraries( demo_0111 ${MiddlewareLibs})
