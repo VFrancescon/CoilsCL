@@ -57,7 +57,7 @@ int main(int argc, char* argv[]){
         
         //make image smaller 
         resize(img, img, Size(rows, cols), INTER_LINEAR);
-        flip(img, img, 1);
+        // flip(img, img, 1);
         line( img, Point(0, cols/3), Point(rows, cols/3), Scalar(0,0,0) ); //horizontal lines
         line( img, Point(0, cols*2/3), Point(rows, cols/3*2), Scalar(0,0,0) );
 

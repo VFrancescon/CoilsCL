@@ -4,8 +4,11 @@
 #include <string>
 #include <algorithm>
 #include <cameraGeneric.hpp>
+#define WAITTIME 100e3
 
-int threshold_low = 20;
+std::string home_path = "home/vittorio/";
+
+int threshold_low = 80;
 int threshold_high = 255;
 std::vector<Point> findJoints(Mat post_img_masked, std::vector<std::vector<Point>> &contours);
 
@@ -59,11 +62,10 @@ int main(int argc, char* argv[]){
     /*-----------------------------------------------------------
     pylon video input here*/
     
-    int rcols, rrows;
-    rcols = pre_img.rows;
-    rrows = pre_img.cols;
+    int rows = pre_img.rows / 2;
+    int cols = pre_img.cols / 2; 
 
-    resize(pre_img, pre_img, Size(rcols, rrows), INTER_LINEAR);
+    resize(pre_img, pre_img, Size(rows, cols), INTER_LINEAR);
     intr_mask = IntroducerMask(pre_img);
 
     AStar::Vec2i origin, destination, wordlsize;
@@ -74,9 +76,11 @@ int main(int argc, char* argv[]){
     generator.setWorldSize(wordlsize);
     generator.setHeuristic(AStar::Heuristic::euclidean);
     generator.setDiagonalMovement(true);
-    Point goal1(60,60);
+    Point goal1(450,480);
+    Point goal2(250,650);
 
 
+    int bileinsertion = 45, straighinsertions = 50;
     /**
      * How to use the A-star pathfinding
      * 
@@ -93,6 +97,10 @@ int main(int argc, char* argv[]){
             }
      */
 
+    VideoWriter video_out("output.avi", VideoWriter::fourcc('M', 'J', 'P', 'G'), 10, 
+                Size(rows, cols));
+
+
 
     MiddlewareLayer mid;
     std::cout << "Everything initialised properly. Press enter to begin.";
@@ -104,7 +112,10 @@ int main(int argc, char* argv[]){
     mid.set3DField(-25, 0, -5);
     while(true){
 
-        if(step_count > 50) break;
+        if(step_count > bileinsertion) {
+            // cv::destroyAllWindows();
+            break;
+            }
 
         
 
@@ -123,7 +134,7 @@ int main(int argc, char* argv[]){
         {
             break;
         }
-        resize(post_img, post_img, Size(rrows, rcols), INTER_LINEAR);
+        resize(post_img, post_img, Size(rows, cols), INTER_LINEAR);
         Mat post_img_grey, post_img_th, post_img_masked;
 
         cvtColor(post_img, post_img_grey, COLOR_BGR2GRAY);
@@ -140,12 +151,67 @@ int main(int argc, char* argv[]){
         for(auto i: Joints){
             circle(post_img, i, 4, Scalar(255,0,0), FILLED);        
         }
+
+
+        destination = goal1;
+        
+        line(post_img, Joints.front(), goal1, Scalar(255,255,0), 1);
+
+        usleep(WAITTIME);
+        imshow("Processed", post_img);
+        video_out.write(post_img);
+        char c= (char)waitKey(1);
+        if(c==27) break;
     
     }
 
     //undo field and retract
     mid.set3DField(0,0,0);
-    mid.retractIntroducer(50);
+    step_count = 0;
+    while(true){
+        
+        if(step_count > bileinsertion) {
+            // cv::destroyAllWindows();
+            break;
+        }
+        
+        mid.retractIntroducer();
+        step_count++;
+        
+ 
+    
+        camera.RetrieveResult(5000, ptrGrabResult, Pylon::TimeoutHandling_ThrowException);
+        const uint8_t* pImageBuffer = (uint8_t*) ptrGrabResult->GetBuffer();
+        formatConverter.Convert(pylonImage, ptrGrabResult);
+        post_img = cv::Mat(ptrGrabResult->GetHeight(), ptrGrabResult->GetWidth(), CV_8UC3, (uint8_t *) pylonImage.GetBuffer());
+
+        if(post_img.empty())
+        {
+            break;
+        }
+        resize(post_img, post_img, Size(rows, cols), INTER_LINEAR);
+        Mat post_img_grey, post_img_th, post_img_masked;
+
+        cvtColor(post_img, post_img_grey, COLOR_BGR2GRAY);
+        blur(post_img_grey, post_img_grey, Size(5,5));
+        threshold(post_img_grey, post_img_th, threshold_low, threshold_high, THRESH_BINARY_INV);
+        post_img_th.copyTo(post_img_masked);
+
+        std::vector<Point> Joints;
+        std::vector<std::vector<Point>> contours;
+        Joints = findJoints(post_img_masked, contours);
+        int JointsObserved = Joints.size();
+        drawContours(post_img, contours, -1, Scalar(255,0,0), FILLED, LINE_8);
+
+        for(auto i: Joints){
+            circle(post_img, i, 4, Scalar(255,0,0), FILLED);        
+        }
+        usleep(WAITTIME);
+        video_out.write(post_img);
+        imshow("Processed", post_img);
+        char c= (char)waitKey(1);
+        if(c==27) break;
+    }
     step_count = 0;
 
     //2. straight channnel
@@ -153,7 +219,10 @@ int main(int argc, char* argv[]){
     //apply +bx
     mid.set3DField(25, 0, -5);
     while(true){
-        if(step_count > 20) break;
+        if(step_count > 20) {
+            // cv::destroyAllWindows();
+            break;
+            }
 
         
         mid.stepIntroducer();
@@ -168,7 +237,7 @@ int main(int argc, char* argv[]){
         {
             break;
         }
-        resize(post_img, post_img, Size(rrows, rcols), INTER_LINEAR);
+        resize(post_img, post_img, Size(rows, cols), INTER_LINEAR);
         Mat post_img_grey, post_img_th, post_img_masked;
 
         cvtColor(post_img, post_img_grey, COLOR_BGR2GRAY);
@@ -185,11 +254,24 @@ int main(int argc, char* argv[]){
         for(auto i: Joints){
             circle(post_img, i, 4, Scalar(255,0,0), FILLED);        
         }
+
+        
+        line(post_img, Joints.front(), goal2, Scalar(255,255,0), 1);
+
+        usleep(WAITTIME);
+        video_out.write(post_img);
+        imshow("Processed", post_img);
+        char c= (char)waitKey(1);
+        if(c==27) break;
     }
+    step_count = 0;
     //apply -bx
     mid.set3DField(-25,0,-5);
     while(true){
-        if(step_count > 20) break;
+        if(step_count > 20) {
+            // cv::destroyAllWindows();
+            break;
+            }
 
         
         mid.stepIntroducer();
@@ -204,7 +286,7 @@ int main(int argc, char* argv[]){
         {
             break;
         }
-        resize(post_img, post_img, Size(rrows, rcols), INTER_LINEAR);
+        resize(post_img, post_img, Size(rows, cols), INTER_LINEAR);
         Mat post_img_grey, post_img_th, post_img_masked;
 
         cvtColor(post_img, post_img_grey, COLOR_BGR2GRAY);
@@ -221,11 +303,21 @@ int main(int argc, char* argv[]){
         for(auto i: Joints){
             circle(post_img, i, 4, Scalar(255,0,0), FILLED);        
         }
+        line(post_img, Joints.front(), goal2, Scalar(255,255,0), 1);
+
+        usleep(WAITTIME);
+        video_out.write(post_img);
+        imshow("Processed", post_img);
+        char c= (char)waitKey(1);
+        if(c==27) break;
     }
     //apply b=0
     mid.set3DField(0,0,0);
         while(true){
-        if(step_count > 20) break;
+        if(step_count > 20) {
+            // cv::destroyAllWindows();
+            break;
+            }
 
         
         mid.stepIntroducer();
@@ -240,7 +332,7 @@ int main(int argc, char* argv[]){
         {
             break;
         }
-        resize(post_img, post_img, Size(rrows, rcols), INTER_LINEAR);
+        resize(post_img, post_img, Size(rows, cols), INTER_LINEAR);
         Mat post_img_grey, post_img_th, post_img_masked;
 
         cvtColor(post_img, post_img_grey, COLOR_BGR2GRAY);
@@ -257,11 +349,66 @@ int main(int argc, char* argv[]){
         for(auto i: Joints){
             circle(post_img, i, 4, Scalar(255,0,0), FILLED);        
         }
+        line(post_img, Joints.front(), goal2, Scalar(255,255,0), 1);
+        usleep(WAITTIME);
+        video_out.write(post_img);
+        imshow("Processed", post_img);
+        char c= (char)waitKey(1);
+        if(c==27) break;
     }
     
     //3. Wrap up
-    mid.retractIntroducer(60);
+    step_count = 0;
+    while(true){
+        
+        if(step_count == 50) {
+            // cv::destroyAllWindows();
+            break;
+        }
+        
+        mid.retractIntroducer();
+        step_count++;
+        
+ 
+    
+        camera.RetrieveResult(5000, ptrGrabResult, Pylon::TimeoutHandling_ThrowException);
+        const uint8_t* pImageBuffer = (uint8_t*) ptrGrabResult->GetBuffer();
+        formatConverter.Convert(pylonImage, ptrGrabResult);
+        post_img = cv::Mat(ptrGrabResult->GetHeight(), ptrGrabResult->GetWidth(), CV_8UC3, (uint8_t *) pylonImage.GetBuffer());
 
+        if(post_img.empty())
+        {
+            break;
+        }
+        resize(post_img, post_img, Size(rows, cols), INTER_LINEAR);
+        Mat post_img_grey, post_img_th, post_img_masked;
+
+        cvtColor(post_img, post_img_grey, COLOR_BGR2GRAY);
+        blur(post_img_grey, post_img_grey, Size(5,5));
+        threshold(post_img_grey, post_img_th, threshold_low, threshold_high, THRESH_BINARY_INV);
+        post_img_th.copyTo(post_img_masked);
+
+        std::vector<Point> Joints;
+        std::vector<std::vector<Point>> contours;
+        Joints = findJoints(post_img_masked, contours);
+        int JointsObserved = Joints.size();
+        drawContours(post_img, contours, -1, Scalar(255,0,0), FILLED, LINE_8);
+
+        for(auto i: Joints){
+            circle(post_img, i, 4, Scalar(255,0,0), FILLED);        
+        }
+        usleep(WAITTIME);
+        video_out.write(post_img);
+        imshow("Processed", post_img);
+        char c= (char)waitKey(1);
+        if(c==27) break;
+    }
+    imshow("Processed", post_img);
+    waitKey(0);
+
+    Pylon::PylonTerminate();
+    cv::destroyAllWindows();
+    video_out.release();
     return 0;
 
 }
