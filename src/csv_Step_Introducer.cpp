@@ -65,17 +65,17 @@ int main(int argc, char* argv[]){
     int rows = pre_img.rows / 2;
     int cols = pre_img.cols / 2; 
 
+
+    std::cout << rows * 1.5 << " " << cols * 1.5 << "\n";
+    rows = rows * 1.5;
+    cols = cols * 1.5;
+    
     resize(pre_img, pre_img, Size(rows, cols), INTER_LINEAR);
     intr_mask = IntroducerMask(pre_img);
 
-    AStar::Vec2i origin, destination, wordlsize;
-    wordlsize.x = pre_img.rows;
-    wordlsize.y = pre_img.cols;
 
-    AStar::Generator generator;
-    generator.setWorldSize(wordlsize);
-    generator.setHeuristic(AStar::Heuristic::euclidean);
-    generator.setDiagonalMovement(true);
+
+    Point destination;
     Point goal1(450,480);
     Point goal2(250,650);
 
