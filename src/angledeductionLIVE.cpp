@@ -1,11 +1,22 @@
 #include <cameraGeneric.hpp>
 
-int threshold_low = 95;
+int threshold_low = 90;
 int threshold_high = 255;
 
 double meanError(std::vector<double> &desired, std::vector<double> &observed);
 
 std::vector<Point> findJoints(Mat post_img_masked, std::vector<std::vector<Point>> &contours);
+
+template<typename T>
+double avgVect(std::vector<T> inputVec){
+    double avg, sum = 0;
+
+    for(auto i : inputVec){
+        sum += i;
+    }
+    avg = sum / inputVec.size();
+    return avg;
+}
 
 int main(int argc, char* argv[]){
 
@@ -58,6 +69,11 @@ int main(int argc, char* argv[]){
     intr_mask = IntroducerMask(pre_img);
     int jointsCached = 0;
     int k = 0;
+    std::vector<double> th1;
+    std::vector<double> th2;
+    std::vector<double> th3;
+    std::vector<double> th4;
+    std::vector<double> th5;
     while(camera.IsGrabbing()){
         camera.RetrieveResult(5000, ptrGrabResult, Pylon::TimeoutHandling_ThrowException);
         const uint8_t* pImageBuffer = (uint8_t*) ptrGrabResult->GetBuffer();
@@ -101,17 +117,23 @@ int main(int argc, char* argv[]){
                 theta = atan(ratio);
                 }
             if(theta > 0) theta = M_PI_2 - abs(theta);
-            std::cout << "i: " << i << " x,y: " << Joints[i].x << " " << Joints[i].y << 
-            " x,y previous " << Joints[i-1].x << " " << Joints[i-1].y << "\n";
-            std::cout << "dx " << Joints[i].x - Joints[i-1].x << " dy " << Joints[i].y - Joints[i-1].y << "\n";
-            std::cout << "ratio: " << dx/dy << "\n";
-            angles.push_back(theta * 180 / M_PI_2);
+            // std::cout << "i: " << i << " x,y: " << Joints[i].x << " " << Joints[i].y << 
+            // " x,y previous " << Joints[i-1].x << " " << Joints[i-1].y << "\n";
+            // std::cout << "dx " << Joints[i].x - Joints[i-1].x << " dy " << Joints[i].y - Joints[i-1].y << "\n";
+            // std::cout << "ratio: " << dx/dy << "\n";
+            angles.push_back(theta * 180 / M_PI_2 - 180);
         }
+
         jointsCached = JointsObserved;
+        std::reverse(angles.begin(), angles.end());
         std::cout << "angles observed:";
         for(auto i: angles) std::cout << " " << i << " ";
         std::cout << "\n";
-        
+        th1.push_back(angles[0]);
+        th2.push_back(angles[1]);
+        th3.push_back(angles[2]);
+        th4.push_back(angles[3]);
+        th5.push_back(angles[4]);
         
         
         
@@ -129,10 +151,22 @@ int main(int argc, char* argv[]){
         imshow("Post", post_img);
         // imshow("Th", post_img_masked);
         // imshow("Mask", intr_mask);
-        char c= (char)waitKey(1e3);
+        char c= (char)waitKey(1e2);
         if(c==27) break;
         
     }
+
+
+    std::cout <<"Average angles\n";
+    double avg1, avg2, avg3, avg4, avg5;
+    avg1 = avgVect(th1);
+    avg2 = avgVect(th2);
+    avg3 = avgVect(th3);
+    avg4 = avgVect(th4);
+    avg5 = avgVect(th5);
+    std::cout << avg1 << " " << avg2 << " " << avg3 << " " << avg4 << " " << avg5 << "\n";
+
+
     Pylon::PylonTerminate();
     destroyAllWindows();
     return 0;
