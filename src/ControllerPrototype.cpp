@@ -233,7 +233,6 @@ int main(int argc, char* argv[]){
                 adjustStiffness(iLinks, EMulitplier);
                 field = CalculateField(iLinks, iJoints, iPosVec);
                 field(1) = 0;
-
                 std::cout << "After the changes are made, field\n" << field << "\nE multiplier= " << EMulitplier << "\n";
             } else if (abs(error) < 10){
                 std::cout << "Error a tad too big, adjusting field\n";
@@ -242,6 +241,16 @@ int main(int argc, char* argv[]){
                 field(2) -= field(2) * 0.1;
                 std::cout << "After changes, field\n" << field << "\n";
             } else continue;
+
+
+
+
+
+
+
+
+
+
             mid.set3DField(field(0), field(1), field(2));
         // }
         for(int i = 1; i < JointsObserved; i++){
@@ -250,7 +259,7 @@ int main(int argc, char* argv[]){
             line(post_img, Joints[i], Joints[i-1], Scalar(255,0,0), 1);
         }
         imshow("Post", post_img);
-        char c= (char)waitKey(1e2);
+        char c= (char)waitKey(0);
         if(c==27) break;
         
     }

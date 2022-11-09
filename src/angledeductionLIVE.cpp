@@ -116,12 +116,12 @@ int main(int argc, char* argv[]){
                 double ratio = dx / dy;
                 theta = atan(ratio);
                 }
-            if(theta > 0) theta = M_PI_2 - abs(theta);
+            // if(theta > 0) theta = M_PI_2 - abs(theta);
             // std::cout << "i: " << i << " x,y: " << Joints[i].x << " " << Joints[i].y << 
             // " x,y previous " << Joints[i-1].x << " " << Joints[i-1].y << "\n";
             // std::cout << "dx " << Joints[i].x - Joints[i-1].x << " dy " << Joints[i].y - Joints[i-1].y << "\n";
             // std::cout << "ratio: " << dx/dy << "\n";
-            angles.push_back(theta * 180 / M_PI_2 - 180);
+            angles.push_back(theta * 180 / M_PI_2);
         }
 
         jointsCached = JointsObserved;
