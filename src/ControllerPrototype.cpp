@@ -1,7 +1,8 @@
 #include "cameraGeneric.hpp"
 #include "precomputation.hpp"
+#include "HCoilMiddlewareLib/HCoilMiddlewareLib.hpp"
 
-int threshold_low = 95;
+int threshold_low = 110;
 int threshold_high = 255;
 
 Mat IntroducerMask(Mat src){
@@ -62,7 +63,7 @@ std::vector<Point> findJoints(Mat post_img_masked, std::vector<std::vector<Point
     std::sort(cntLine.begin(), cntLine.end(), yWiseSort);
     // std::reverse(cntLine.begin(), cntLine.end());
     
-    int link_lenght = 70;
+    int link_lenght = 80;
     std::vector<Point> Joints;
     int jointCount = (int) cntLine.size() / link_lenght;
     
@@ -85,8 +86,8 @@ int main(int argc, char* argv[]){
 
     //timesteps are equal to joint no
     int timesteps = jointEff;  
-    Vector3d reconciliationAngles = Vector3d{-90, 0, 90};
-    double EMulitplier = 10;
+    // Vector3d reconciliationAngles = Vector3d{-90, 0, 90};
+    double EMulitplier = 5;
     /* * * * * * * * * * * * * * * * * * * * * * * * *
      * PRECOMPUTATION FOR EACH TIMESTEP BEGINS HERE  *
      *                                               *
@@ -95,11 +96,11 @@ int main(int argc, char* argv[]){
     std::vector<Vector3d> AppliedFields;
 
     std::vector<int> DesiredAngles(jointNo);
-    DesiredAngles[0] = 10;
-    DesiredAngles[1] = 20;
-    DesiredAngles[2] = 30;
-    DesiredAngles[3] = 45;
-    DesiredAngles[4] = 30;
+    DesiredAngles[0] = -21;
+    DesiredAngles[1] = -29;
+    DesiredAngles[2] = -38;
+    DesiredAngles[3] = -47;
+    DesiredAngles[4] = -45;
     DesiredAngles[jointEff] = 0;
 
     std::vector<Vector3d> Magnetisations(jointNo);
@@ -133,10 +134,14 @@ int main(int argc, char* argv[]){
     
     // Vector3d field = RotateField(solution, reconciliationAngles);
     Vector3d field = CalculateField(iLinks, iJoints, iPosVec);
-    // field(2) = 0;
+    field(1) = 0;
     
-
-
+    /**
+     * MIDDLEWARE SECTION BELOW
+     * 
+     */
+    MiddlewareLayer mid(true);
+    mid.set3DField(field(0), field(1), field(2));
 
     Mat pre_img, post_img, intr_mask;
     Pylon::PylonInitialize();
@@ -155,23 +160,23 @@ int main(int argc, char* argv[]){
     height.TrySetValue(480*3, Pylon::IntegerValueCorrection_Nearest);
     Pylon::CPixelTypeMapper pixelTypeMapper( &pixelFormat);
     Pylon::EPixelType pixelType = pixelTypeMapper.GetPylonPixelTypeFromNodeValue(pixelFormat.GetIntValue());
+    
+    
     camera.StartGrabbing(Pylon::GrabStrategy_LatestImageOnly);
     Pylon::CGrabResultPtr ptrGrabResult;
     camera.RetrieveResult(5000, ptrGrabResult, Pylon::TimeoutHandling_ThrowException);
     const uint8_t* preImageBuffer = (uint8_t*) ptrGrabResult->GetBuffer();
     formatConverter.Convert(pylonImage, ptrGrabResult);
-    pre_img = cv::Mat(ptrGrabResult->GetHeight(), ptrGrabResult->GetWidth(), CV_8UC3, (uint8_t *) pylonImage.GetBuffer());
+    pre_img = imread("../IntrPicture.png", IMREAD_COLOR);
+    
     int rcols, rrows;
-    rcols = pre_img.rows * 3 / 8;
-    rrows = pre_img.cols * 3 / 8;
+    rcols = pre_img.rows;
+    rrows = pre_img.cols;
     
-    
-    resize(pre_img, pre_img, Size(rrows, rcols), INTER_LINEAR);
 
-    camera.RetrieveResult(5000, ptrGrabResult, Pylon::TimeoutHandling_ThrowException);
-    const uint8_t* pImageBuffer = (uint8_t*) ptrGrabResult->GetBuffer();
-    formatConverter.Convert(pylonImage, ptrGrabResult);
-    pre_img = cv::Mat(ptrGrabResult->GetHeight(), ptrGrabResult->GetWidth(), CV_8UC3, (uint8_t *) pylonImage.GetBuffer());
+    // resize(pre_img, pre_img, Size(rrows, rcols), INTER_LINEAR);
+    // Mat pre_img1 = Mat::zeros(Size(rrows, rcols), CV_8UC3);
+    // intr_mask = IntroducerMask(pre_img1);
     intr_mask = IntroducerMask(pre_img);
     int jointsCached = 0;
 
@@ -186,27 +191,28 @@ int main(int argc, char* argv[]){
             break;
         }
         resize(post_img, post_img, Size(rrows, rcols), INTER_LINEAR);
-        Mat post_img_grey, post_img_th, post_img_masked;
+        Mat post_img_grey, post_img_th;
+        Mat post_img_masked = Mat::zeros(Size(rrows,rcols), CV_8UC1);
 
         cvtColor(post_img, post_img_grey, COLOR_BGR2GRAY);
-        threshold(post_img_grey, post_img_th, 50, 250, THRESH_BINARY_INV);
-        post_img_th.copyTo(post_img_masked, intr_mask);
+        blur(post_img_grey, post_img_grey, Size(5,5));
+        threshold(post_img_grey, post_img_th, threshold_low, threshold_high, THRESH_BINARY_INV);
+        post_img_th.copyTo(post_img_masked);
 
         std::vector<Point> Joints;
         std::vector<std::vector<Point> > contours;
 
         Joints = findJoints(post_img_masked, contours);
         int JointsObserved = Joints.size();
-
         for(auto i: Joints){
             circle(post_img, i, 4, Scalar(255,0,0), FILLED);        
         }
         drawContours(post_img, contours, -1, Scalar(255,255,0));
 
         
-        if(JointsObserved != jointsCached){
+        // if(JointsObserved != jointsCached){
             std::vector<double> angles;
-            std::vector<double> desiredAngles = {90,30, 50, 60, 80};
+            std::vector<double> desiredAngles = {-21,-29,-38,-47,-45};
             for(int i = 1; i < JointsObserved; i++){
                 if(Joints[i].y - Joints[i-1].y == 0) continue;
                 double ratio = ( Joints[i].x - Joints[i-1].x ) / ( Joints[i].y - Joints[i-1].y );
@@ -217,30 +223,34 @@ int main(int argc, char* argv[]){
             jointsCached = JointsObserved;
             std::vector<double> dAngleSlice = std::vector<double>(desiredAngles.begin(), desiredAngles.begin()+angles.size());         
             double error = meanError(dAngleSlice, angles);
-            std::cout << "Error: " << error << "\n";
+            std::cout << "Given field " << field << " Error: " << error << "\n";
 
-            if(error > 20){
+            if(abs(error) > 20){
                 std::cout << "Error too large, adjusting stiffness assumptions\n";
                 std::cout << "Before any changes, field\n" << field << "\nE multiplier= " << EMulitplier << "\n";
                 EMulitplier++;
+                if(EMulitplier > 15) break;
                 adjustStiffness(iLinks, EMulitplier);
                 field = CalculateField(iLinks, iJoints, iPosVec);
+                field(1) = 0;
+
                 std::cout << "After the changes are made, field\n" << field << "\nE multiplier= " << EMulitplier << "\n";
-            } else if (error < 10){
+            } else if (abs(error) < 10){
                 std::cout << "Error a tad too big, adjusting field\n";
                 std::cout << "Before any changes, field\n" << field << "\n";
                 field(0) -= field(0) * 0.1;
                 field(2) -= field(2) * 0.1;
                 std::cout << "After changes, field\n" << field << "\n";
             } else continue;
-        }
+            mid.set3DField(field(0), field(1), field(2));
+        // }
         for(int i = 1; i < JointsObserved; i++){
             Rect recta(Joints[i], Joints[i-1]);
             rectangle(post_img, recta, Scalar(0,0,255), 1);
             line(post_img, Joints[i], Joints[i-1], Scalar(255,0,0), 1);
         }
         imshow("Post", post_img);
-        char c= (char)waitKey(1);
+        char c= (char)waitKey(1e2);
         if(c==27) break;
         
     }

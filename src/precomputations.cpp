@@ -6,8 +6,8 @@ int main(int argc, char* argv[]){
 
     //timesteps are equal to joint no
     int timesteps = jointEff;  
-    Vector3d reconciliationAngles = Vector3d{-90, 0, 90};
-    double EMulitplier = 14;
+    Vector3d reconciliationAngles = Vector3d{0,0,0};
+    double EMulitplier = 5;
     /* * * * * * * * * * * * * * * * * * * * * * * * *
      * PRECOMPUTATION FOR EACH TIMESTEP BEGINS HERE  *
      *                                               *
@@ -16,11 +16,11 @@ int main(int argc, char* argv[]){
     std::vector<Vector3d> AppliedFields;
 
     std::vector<int> DesiredAngles(jointNo);
-    DesiredAngles[0] = 10;
-    DesiredAngles[1] = 20;
-    DesiredAngles[2] = 30;
-    DesiredAngles[3] = 45;
-    DesiredAngles[4] = 30;
+    DesiredAngles[0] = -21;
+    DesiredAngles[1] = -29;
+    DesiredAngles[2] = -38;
+    DesiredAngles[3] = -47;
+    DesiredAngles[4] = -45;
     DesiredAngles[jointEff] = 0;
 
     std::vector<Vector3d> Magnetisations(jointNo);
@@ -83,7 +83,7 @@ int main(int argc, char* argv[]){
 
         
         Vector3d field = RotateField(solution, reconciliationAngles);
-        if(field(2) < 1e-9) field(2) = 0;
+        // if(field(2) < 1e-9) field(2) = 0;
         AppliedFields.push_back(field);
         DesiredAngles.pop_back();
         Magnetisations.pop_back();

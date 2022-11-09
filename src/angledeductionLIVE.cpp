@@ -1,6 +1,6 @@
 #include <cameraGeneric.hpp>
 
-int threshold_low = 90;
+int threshold_low = 110;
 int threshold_high = 255;
 
 double meanError(std::vector<double> &desired, std::vector<double> &observed);
