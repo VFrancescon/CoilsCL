@@ -29,13 +29,14 @@ std::vector<double> computeAngles(std::vector<Point> Joints){
     for(int i = 1; i < Joints.size(); i++){
         vects.push_back(Point{Joints[i].x - Joints[i-1].x, Joints[i].y - Joints[i-1].y}  );
     }
-    for(int i = 1; i < vects.size(); i++){
-        double dproduct = vects[i].dot(vects[i-1]);
-        double nproduct = norm(vects[i]) * norm(vects[i-1]);
+    for(int i = 0; i < vects.size()-1; i++){
+        double dproduct = vects[i].dot(vects[i+1]);
+        double nproduct = norm(vects[i]) * norm(vects[i+1]);
         double th = acos(dproduct/nproduct);
         angles.push_back(th * 180 / M_PI);
+        std::cout << "v" << i << " =" << vects[i] << ";\n";
     }
-
+    std::cout << "\n";
     return angles;
 }
 
