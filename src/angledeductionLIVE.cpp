@@ -18,6 +18,27 @@ double avgVect(std::vector<T> inputVec){
     return avg;
 }
 
+
+std::vector<double> computeAngles(std::vector<Point> Joints);
+
+std::vector<double> computeAngles(std::vector<Point> Joints){
+    std::vector<double> angles;
+    std::vector<Point> vects;
+
+    Joints.insert(Joints.begin(), Point(Joints[0].x, 0));
+    for(int i = 1; i < Joints.size(); i++){
+        vects.push_back(Point{Joints[i].x - Joints[i-1].x, Joints[i].y - Joints[i-1].y}  );
+    }
+    for(int i = 1; i < vects.size(); i++){
+        double dproduct = vects[i].dot(vects[i-1]);
+        double nproduct = norm(vects[i]) * norm(vects[i-1]);
+        double th = acos(dproduct/nproduct);
+        angles.push_back(th * 180 / M_PI);
+    }
+
+    return angles;
+}
+
 int main(int argc, char* argv[]){
 
 
@@ -107,22 +128,7 @@ int main(int argc, char* argv[]){
         // if(JointsObserved != jointsCached){
         std::vector<double> angles;
     //     std::vector<double> desiredAngles = {90,30, 50, 60, 80};
-        for(int i = 1; i < JointsObserved; i++){
-            double theta, dx, dy;
-            if(Joints[i].y - Joints[i-1].y == 0) theta = 0;
-            else {
-                dx = (double) Joints[i].x - Joints[i-1].x;
-                dy = (double) Joints[i].y - Joints[i-1].y;
-                double ratio = dx / dy;
-                theta = atan(ratio);
-                }
-            // if(theta > 0) theta = M_PI_2 - abs(theta);
-            // std::cout << "i: " << i << " x,y: " << Joints[i].x << " " << Joints[i].y << 
-            // " x,y previous " << Joints[i-1].x << " " << Joints[i-1].y << "\n";
-            // std::cout << "dx " << Joints[i].x - Joints[i-1].x << " dy " << Joints[i].y - Joints[i-1].y << "\n";
-            // std::cout << "ratio: " << dx/dy << "\n";
-            angles.push_back(theta * 180 / M_PI_2);
-        }
+        angles = computeAngles(Joints);
 
         jointsCached = JointsObserved;
         std::reverse(angles.begin(), angles.end());

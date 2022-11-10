@@ -7,6 +7,26 @@ std::string post_img_path = "/home/vittorio/coilsCL/imgs/Post_Insertion_IMG.png"
 
 std::vector<Point> findJoints(Mat pre_img, Mat post_img);
 double meanError(std::vector<double> &desired, std::vector<double> &observed);
+std::vector<double> computeAngles(std::vector<Point> Joints);
+
+std::vector<double> computeAngles(std::vector<Point> Joints){
+    std::vector<double> angles;
+    std::vector<Point> vects;
+
+    Joints.insert(Joints.begin(), Point(Joints[0].x, 0));
+    for(int i = 1; i < Joints.size(); i++){
+        vects.push_back(Point{Joints[i].x - Joints[i-1].x, Joints[i].y - Joints[i-1].y}  );
+    }
+    for(int i = 1; i < vects.size(); i++){
+        double dproduct = vects[i].dot(vects[i-1]);
+        double nproduct = norm(vects[i]) * norm(vects[i-1]);
+        double th = acos(dproduct/nproduct);
+        angles.push_back(th * 180 / M_PI);
+    }
+
+    return angles;
+
+}
 
 int main(int argc, char* argv[]){
     Mat pre_img = imread(pre_img_path, IMREAD_COLOR);
@@ -30,24 +50,21 @@ int main(int argc, char* argv[]){
 
     for(auto i: Joints){
         circle(post_img, i, 4, Scalar(255,0,0), FILLED);        
+        std::cout << "i: " << i << "\n";
     }
     
     std::vector<double> angles;
     std::vector<double> desiredAngles = {90,30};
-    for(int i = 1; i < Joints.size(); i++){
-        // std::cout << Joints[i] << " ";
-        double ratio = ( Joints[i].x - Joints[i-1].x ) / ( Joints[i].y - Joints[i-1].y );
-        double theta = atan(ratio);
-        if(theta < 0) theta = M_PI_2 - abs(theta);
-        // std::cout << "angle " << theta * 180 / M_PI_2 << "\n";
+    angles = computeAngles(Joints);
 
-        Rect recta(Joints[i], Joints[i-1]);
-        rectangle(post_img, recta, Scalar(0,0,255), 1);
-        line(post_img, Joints[i], Joints[i-1], Scalar(255,0,0), 1);
-        angles.push_back(theta * 180 / M_PI_2 );
-    }
+
     double error = meanError(desiredAngles, angles);
     std::cout << "Error: " << error << "\n";
+
+    std::cout << "angles observed:";
+    for(auto i: angles) std::cout << " " << i << " ";
+    std::cout << "\n";
+
 
     imshow("Post", post_img);
     char c = (char)waitKey(0);
