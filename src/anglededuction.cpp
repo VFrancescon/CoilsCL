@@ -17,9 +17,9 @@ std::vector<double> computeAngles(std::vector<Point> Joints){
     for(int i = 1; i < Joints.size(); i++){
         vects.push_back(Point{Joints[i].x - Joints[i-1].x, Joints[i].y - Joints[i-1].y}  );
     }
-    for(int i = 1; i < vects.size(); i++){
-        double dproduct = vects[i].dot(vects[i-1]);
-        double nproduct = norm(vects[i]) * norm(vects[i-1]);
+    for(int i = 0; i < vects.size()-1; i++){
+        double dproduct = vects[i].dot(vects[i+1]);
+        double nproduct = norm(vects[i]) * norm(vects[i+1]);
         double th = acos(dproduct/nproduct);
         angles.push_back(th * 180 / M_PI);
     }
@@ -56,7 +56,11 @@ int main(int argc, char* argv[]){
     std::vector<double> angles;
     std::vector<double> desiredAngles = {90,30};
     angles = computeAngles(Joints);
-
+    int k = 0;
+    for(auto i: Joints){
+        putText(post_img, std::to_string(k), i, FONT_HERSHEY_SIMPLEX, 2, Scalar(255, 0, 255));
+        k++;
+    }
 
     double error = meanError(desiredAngles, angles);
     std::cout << "Error: " << error << "\n";
@@ -158,6 +162,8 @@ std::vector<Point> findJoints(Mat pre_img, Mat post_img){
         if(neighbor_counter == 1) endpoint = i;
     }
     Joints.push_back(endpoint);
+
+    // std::reverse(Joints.begin(), Joints.end());
 
     return Joints;
 }
