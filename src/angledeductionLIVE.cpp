@@ -39,11 +39,15 @@ std::vector<double> computeAngles(std::vector<Point> Joints){
     std::cout << "\n";
     return angles;
 }
+inline bool file_exists (const std::string& name) {
+    struct stat buffer;   
+    return (stat (name.c_str(), &buffer) == 0); 
+}
 
 int main(int argc, char* argv[]){
 
 
-
+    
 
     Mat pre_img, post_img, intr_mask;
     pre_img = imread("../IntrPicture.png", IMREAD_COLOR);
@@ -81,6 +85,15 @@ int main(int argc, char* argv[]){
     rcols = pre_img.rows;
     rrows = pre_img.cols;
     
+    std::string outputPath = "AD_LIVE";
+
+    while(file_exists(outputPath)){
+        outputPath += "_1";
+    }
+    outputPath += ".avi";
+
+    VideoWriter video_out(outputPath, VideoWriter::fourcc('M', 'J', 'P', 'G'), 10, 
+                Size(rrows, rcols));
     
     // resize(pre_img, pre_img, Size(rrows, rcols), INTER_LINEAR);
 
@@ -156,6 +169,7 @@ int main(int argc, char* argv[]){
         
 
         imshow("Post", post_img);
+        video_out.write(post_img);
         // imshow("Th", post_img_masked);
         // imshow("Mask", intr_mask);
         char c= (char)waitKey(1e2);
@@ -173,7 +187,7 @@ int main(int argc, char* argv[]){
     avg5 = avgVect(th5);
     std::cout << avg1 << " " << avg2 << " " << avg3 << " " << avg4 << " " << avg5 << "\n";
 
-
+    video_out.release();
     Pylon::PylonTerminate();
     destroyAllWindows();
     return 0;
