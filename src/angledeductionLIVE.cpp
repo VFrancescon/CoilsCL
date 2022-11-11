@@ -1,7 +1,8 @@
 #include <cameraGeneric.hpp>
 
-int threshold_low = 110;
+int threshold_low = 140;
 int threshold_high = 255;
+int link_lenght = 80;
 
 double meanError(std::vector<double> &desired, std::vector<double> &observed);
 
@@ -18,8 +19,6 @@ double avgVect(std::vector<T> inputVec){
     return avg;
 }
 
-
-std::vector<double> computeAngles(std::vector<Point> Joints);
 
 std::vector<double> computeAngles(std::vector<Point> Joints){
     std::vector<double> angles;
@@ -39,6 +38,25 @@ std::vector<double> computeAngles(std::vector<Point> Joints){
     return angles;
 
 }
+
+
+std::vector<Point> computeIdealPoints(Point p0, std::vector<double> desiredAngles){
+    std::vector<Point> ideal;
+
+    ideal.push_back(p0);
+    for(int i = 1; i < desiredAngles.size(); i++){
+        double angle = 0;
+        for( int k = 0; k < i; k++) angle += desiredAngles[k];
+        int xdiff = (link_lenght+35) * sin(angle * M_PI / 180);
+        int ydiff = (link_lenght+35) * cos(angle * M_PI / 180);
+        Point pn = Point{ (int) (ideal[i-1].x + xdiff), (int) ( ideal[i-1].y + ydiff )}; 
+        ideal.push_back(pn);
+    }
+
+    return ideal;
+}
+
+
 inline bool file_exists (const std::string& name) {
     struct stat buffer;   
     return (stat (name.c_str(), &buffer) == 0); 
@@ -82,20 +100,20 @@ int main(int argc, char* argv[]){
 
 
     int rcols, rrows;
-    rcols = pre_img.rows;
-    rrows = pre_img.cols;
+    rcols = pre_img.cols;
+    rrows = pre_img.rows;
     
-    std::string outputPath = "AD_LIVE";
+    std::string outputPath = "AD_LIVE.avi";
 
     while(file_exists(outputPath)){
         outputPath += "_1";
     }
-    outputPath += ".avi";
+
 
     VideoWriter video_out(outputPath, VideoWriter::fourcc('M', 'J', 'P', 'G'), 10, 
-                Size(rrows, rcols));
+                Size(rcols, rrows));
     
-    // resize(pre_img, pre_img, Size(rrows, rcols), INTER_LINEAR);
+    // resize(pre_img, pre_img, Size(rcols, rrows), INTER_LINEAR);
 
     // camera.RetrieveResult(5000, ptrGrabResult, Pylon::TimeoutHandling_ThrowException);
     // const uint8_t* pImageBuffer = (uint8_t*) ptrGrabResult->GetBuffer();
@@ -109,6 +127,8 @@ int main(int argc, char* argv[]){
     std::vector<double> th3;
     std::vector<double> th4;
     std::vector<double> th5;
+    // std::cout << " Made it to while loop\n";
+    Point p0 = Point{-2000,2000};
     while(camera.IsGrabbing()){
         camera.RetrieveResult(5000, ptrGrabResult, Pylon::TimeoutHandling_ThrowException);
         const uint8_t* pImageBuffer = (uint8_t*) ptrGrabResult->GetBuffer();
@@ -119,7 +139,7 @@ int main(int argc, char* argv[]){
         {
             break;
         }
-        resize(post_img, post_img, Size(rrows, rcols), INTER_LINEAR);
+        resize(post_img, post_img, Size(rcols, rrows), INTER_LINEAR);
         Mat post_img_grey, post_img_th, post_img_masked;
 
         cvtColor(post_img, post_img_grey, COLOR_BGR2GRAY);
@@ -131,6 +151,23 @@ int main(int argc, char* argv[]){
         std::vector<Point> Joints;
         std::vector<std::vector<Point>> contours;
         Joints = findJoints(post_img_masked, contours);
+        
+        std::vector<double> angles; 
+        std::vector<double> desiredAngles = {12,4,4,3.8,4};
+        std::vector<Point> idealPoints;
+        if(p0 == Point{-2000,2000}) p0 = Joints[0];
+
+        idealPoints = computeIdealPoints(p0, desiredAngles);
+        angles = computeAngles(Joints);
+        for(int i = 0; i < idealPoints.size()-1; i++){
+            line(post_img, idealPoints[i], idealPoints[i+1], Scalar(0,0,255));
+            circle(post_img, idealPoints[i], 2, Scalar(255,0,0));
+        }
+        
+        
+        
+        
+        
         int JointsObserved = Joints.size();
         drawContours(post_img, contours, -1, Scalar(255,0,0), FILLED, LINE_8);
 
@@ -139,16 +176,15 @@ int main(int argc, char* argv[]){
         }
 
         
+
+        
         // if(JointsObserved != jointsCached){
-        std::vector<double> angles;
-    //     std::vector<double> desiredAngles = {90,30, 50, 60, 80};
-        angles = computeAngles(Joints);
+
 
         jointsCached = JointsObserved;
-        std::reverse(angles.begin(), angles.end());
-        std::cout << "angles observed:";
-        for(auto i: angles) std::cout << " " << i << " ";
-        std::cout << "\n";
+        // std::cout << "angles observed:";
+        // for(auto i: angles) std::cout << " " << i << " ";
+        // std::cout << "\n";
         th1.push_back(angles[0]);
         th2.push_back(angles[1]);
         th3.push_back(angles[2]);
@@ -167,11 +203,8 @@ int main(int argc, char* argv[]){
             line(post_img, Joints[i], Joints[i-1], Scalar(255,0,0), 1);
         }
         
-
         imshow("Post", post_img);
         video_out.write(post_img);
-        // imshow("Th", post_img_masked);
-        // imshow("Mask", intr_mask);
         char c= (char)waitKey(1e2);
         if(c==27) break;
         
@@ -187,9 +220,10 @@ int main(int argc, char* argv[]){
     avg5 = avgVect(th5);
     std::cout << avg1 << " " << avg2 << " " << avg3 << " " << avg4 << " " << avg5 << "\n";
 
-    video_out.release();
+    
     Pylon::PylonTerminate();
     destroyAllWindows();
+    video_out.release();
     return 0;
 }
 
@@ -242,7 +276,6 @@ std::vector<Point> findJoints(Mat post_img_masked, std::vector<std::vector<Point
     std::sort(cntLine.begin(), cntLine.end(), yWiseSort);
     // std::reverse(cntLine.begin(), cntLine.end());
     
-    int link_lenght = 70;
     std::vector<Point> Joints;
     int jointCount = (int) cntLine.size() / link_lenght;
     
@@ -252,7 +285,7 @@ std::vector<Point> findJoints(Mat post_img_masked, std::vector<std::vector<Point
             Joints.push_back(cntLine[link_lenght*(i)]);
         }
     }
-
+    std::reverse(Joints.begin(), Joints.end());
     return Joints;
 }
 
