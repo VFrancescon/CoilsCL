@@ -34,10 +34,10 @@ std::vector<double> computeAngles(std::vector<Point> Joints){
         double nproduct = norm(vects[i]) * norm(vects[i+1]);
         double th = acos(dproduct/nproduct);
         angles.push_back(th * 180 / M_PI);
-        std::cout << "v" << i << " =" << vects[i] << ";\n";
     }
-    std::cout << "\n";
+
     return angles;
+
 }
 inline bool file_exists (const std::string& name) {
     struct stat buffer;   
