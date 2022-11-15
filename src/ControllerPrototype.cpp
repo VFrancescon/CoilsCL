@@ -139,6 +139,48 @@ std::vector<Point> findJoints(Mat post_img_masked, std::vector<std::vector<Point
     return Joints;
 }
 
+std::vector<Point> computeIdealPoints(Point p0, std::vector<double> desiredAngles){
+    std::vector<Point> ideal;
+
+    ideal.push_back(p0);
+    for(int i = 1; i < desiredAngles.size(); i++){
+        double angle = 0;
+        for( int k = 0; k < i; k++) angle += desiredAngles[k];
+        int xdiff = (link_lenght+35) * sin(angle * M_PI / 180);
+        int ydiff = (link_lenght+35) * cos(angle * M_PI / 180);
+        Point pn = Point{ (int) (ideal[i-1].x + xdiff), (int) ( ideal[i-1].y + ydiff )}; 
+        ideal.push_back(pn);
+    }
+
+    return ideal;
+}
+
+
+std::vector<double> computeAngles(std::vector<Point> Joints){
+    std::vector<double> angles;
+    std::vector<Point> vects;
+
+    Joints.insert(Joints.begin(), Point(Joints[0].x, 0));
+    for(int i = 1; i < Joints.size(); i++){
+        vects.push_back(Point{Joints[i].x - Joints[i-1].x, Joints[i].y - Joints[i-1].y}  );
+    }
+    for(int i = 0; i < vects.size()-1; i++){
+        double dproduct = vects[i].dot(vects[i+1]);
+        double nproduct = norm(vects[i]) * norm(vects[i+1]);
+        double th = acos(dproduct/nproduct);
+        angles.push_back(th * 180 / M_PI);
+    }
+
+    return angles;
+
+}
+
+
+inline bool file_exists (const std::string& name) {
+    struct stat buffer;   
+    return (stat (name.c_str(), &buffer) == 0); 
+}
+
 void adjustStiffness(std::vector<Link> &iLinks, double EMulitplier);
 Vector3d CalculateField(std::vector<Link> &iLinks, std::vector<Joint> &iJoints, std::vector<PosOrientation> &iPosVec);
 
@@ -161,7 +203,7 @@ int main(int argc, char* argv[]){
     DesiredAngles[0] = 12;
     DesiredAngles[1] = 4;
     DesiredAngles[2] = 4;
-    DesiredAngles[3] = 4;
+    DesiredAngles[3] = 3.8;
     DesiredAngles[4] = 4;
     DesiredAngles[jointEff] = 0;
 
@@ -198,16 +240,14 @@ int main(int argc, char* argv[]){
     Vector3d field = CalculateField(iLinks, iJoints, iPosVec);
     field(1) = 0;
     
+
+
     /**
      * MIDDLEWARE SECTION BELOW
      * 
      */
     MiddlewareLayer mid(true);
-    mid.set3DField(field(0), field(1), field(2));
-
-
-
-    
+    mid.set3DField(field);
 
     Mat pre_img, post_img, intr_mask;
     Pylon::PylonInitialize();
@@ -253,6 +293,16 @@ int main(int argc, char* argv[]){
     VideoWriter video_out(outputPath, VideoWriter::fourcc('M', 'J', 'P', 'G'), 10, 
                 Size(rcols, rrows));
 
+    std::string outputPath = "AD_LIVE.avi";
+
+    while(file_exists(outputPath)){
+        outputPath += "_1";
+    }
+
+
+    VideoWriter video_out(outputPath, VideoWriter::fourcc('M', 'J', 'P', 'G'), 10, 
+                Size(rcols, rrows));
+
     // resize(pre_img, pre_img, Size(rcols, rrows), INTER_LINEAR);
     // Mat pre_img1 = Mat::zeros(Size(rcols, rrows), CV_8UC3);
     // intr_mask = IntroducerMask(pre_img1);
@@ -289,57 +339,49 @@ int main(int argc, char* argv[]){
         }
         drawContours(post_img, contours, -1, Scalar(255,255,0));
 
+
         
+        std::vector<double> angles; 
+        std::vector<double> desiredAngles = {12,4,4,3.8,4};
+        std::vector<Point> idealPoints;
+        Point p0 = Point{-2000,2000};
+        if(p0 == Point{-2000,2000}) p0 = Joints[0];
+
+        idealPoints = computeIdealPoints(p0, desiredAngles);
+        angles = computeAngles(Joints);
+        for(int i = 0; i < idealPoints.size()-1; i++){
+            line(post_img, idealPoints[i], idealPoints[i+1], Scalar(0,0,255));
+            circle(post_img, idealPoints[i], 2, Scalar(255,0,0));
+        }
+
+
+
         // if(JointsObserved != jointsCached){
-            std::vector<double> angles;
-            std::vector<double> desiredAngles = std::vector<double>(DesiredAngles.begin(), DesiredAngles.end()-1);
-            
-            angles = computeAngles(Joints);
-            std::vector<Point> idealPoints;
-            if(p0 == Point{-2000,2000}) p0 = Joints[0];
 
-            idealPoints = computeIdealPoints(p0, desiredAngles);
-            
-            for(int i = 0; i < idealPoints.size()-1; i++){
-                line(post_img, idealPoints[i], idealPoints[i+1], Scalar(0,0,255));
-                circle(post_img, idealPoints[i], 2, Scalar(255,0,0));
-                std::cout << "point " << idealPoints[i];
-            }
-
-
-
-
+            jointsCached = JointsObserved;
             // std::vector<double> dAngleSlice = std::vector<double>(desiredAngles.begin(), desiredAngles.begin()+angles.size());         
-            // double error = meanError(dAngleSlice, angles);
-            // std::cout << "Given field " << field << " Error: " << error << "\n";
+            std::vector<double> dAngleSlice = desiredAngles;
+            double error = meanError(dAngleSlice, angles);
+            std::cout << "Given field " << field << " Error: " << error << "\n";
 
-            // if(abs(error) > 20){
-            //     std::cout << "Error too large, adjusting stiffness assumptions\n";
-            //     std::cout << "Before any changes, field\n" << field << "\nE multiplier= " << EMulitplier << "\n";
-            //     EMulitplier++;
-            //     if(EMulitplier > 15) break;
-            //     adjustStiffness(iLinks, EMulitplier);
-            //     field = CalculateField(iLinks, iJoints, iPosVec);
-            //     field(1) = 0;
-            //     std::cout << "After the changes are made, field\n" << field << "\nE multiplier= " << EMulitplier << "\n";
-            // } else if (abs(error) < 10){
-            //     std::cout << "Error a tad too big, adjusting field\n";
-            //     std::cout << "Before any changes, field\n" << field << "\n";
-            //     field(0) -= field(0) * 0.1;
-            //     field(2) -= field(2) * 0.1;
-            //     std::cout << "After changes, field\n" << field << "\n";
-            // } else continue;
+            if(abs(error) > 20){
+                std::cout << "Error too large, adjusting stiffness assumptions\n";
+                std::cout << "Before any changes, field\n" << field << "\nE multiplier= " << EMulitplier << "\n";
+                EMulitplier++;
+                if(EMulitplier > 15) break;
+                adjustStiffness(iLinks, EMulitplier);
+                field = CalculateField(iLinks, iJoints, iPosVec);
+                field(1) = 0;
+                std::cout << "After the changes are made, field\n" << field << "\nE multiplier= " << EMulitplier << "\n";
+            } else if (abs(error) < 19 && abs(error) > 5){
+                std::cout << "Error a tad too big, adjusting field\n";
+                std::cout << "Before any changes, field\n" << field << "\n";
+                field(0) -= field(0) * 0.1;
+                field(2) -= field(2) * 0.1;
+                std::cout << "After changes, field\n" << field << "\n";
+            } else continue;
 
-
-
-
-
-
-
-
-
-
-            // mid.set3DField(field(0), field(1), field(2));
+            mid.set3DField(field);
         // }
         for(int i = 1; i < JointsObserved; i++){
             Rect recta(Joints[i], Joints[i-1]);
@@ -347,8 +389,7 @@ int main(int argc, char* argv[]){
             line(post_img, Joints[i], Joints[i-1], Scalar(255,0,0), 1);
         }
         imshow("Post", post_img);
-        video_out.write(post_img);
-        char c= (char)waitKey(10e2);
+        char c= (char)waitKey(10e3);
         if(c==27) break;
         
     }
