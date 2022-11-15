@@ -142,8 +142,6 @@ int main(int argc, char* argv[]){
         th4.push_back(angles[3]);
         th5.push_back(angles[4]);
         
-        
-        
         //     std::vector<double> dAngleSlice = std::vector<double>(desiredAngles.begin(), desiredAngles.begin()+angles.size());         
         //     double error = meanError(dAngleSlice, angles);
         //     std::cout << "Error: " << error << "\n";
@@ -156,8 +154,6 @@ int main(int argc, char* argv[]){
         
 
         imshow("Post", post_img);
-        // imshow("Th", post_img_masked);
-        // imshow("Mask", intr_mask);
         char c= (char)waitKey(1e2);
         if(c==27) break;
         

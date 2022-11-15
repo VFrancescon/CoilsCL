@@ -141,7 +141,7 @@ int main(int argc, char* argv[]){
      * 
      */
     MiddlewareLayer mid(true);
-    mid.set3DField(field(0), field(1), field(2));
+    mid.set3DField(field);
 
     Mat pre_img, post_img, intr_mask;
     Pylon::PylonInitialize();
