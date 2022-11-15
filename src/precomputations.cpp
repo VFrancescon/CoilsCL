@@ -7,7 +7,7 @@ int main(int argc, char* argv[]){
     //timesteps are equal to joint no
     int timesteps = jointEff;  
     Vector3d reconciliationAngles = Vector3d{0,0,0};
-    double EMulitplier = 5;
+    double EMulitplier = 15;
     /* * * * * * * * * * * * * * * * * * * * * * * * *
      * PRECOMPUTATION FOR EACH TIMESTEP BEGINS HERE  *
      *                                               *
@@ -16,11 +16,11 @@ int main(int argc, char* argv[]){
     std::vector<Vector3d> AppliedFields;
 
     std::vector<int> DesiredAngles(jointNo);
-    DesiredAngles[0] = -21;
-    DesiredAngles[1] = -29;
-    DesiredAngles[2] = -38;
-    DesiredAngles[3] = -47;
-    DesiredAngles[4] = -45;
+    DesiredAngles[0] = 0;
+    DesiredAngles[1] = 10;
+    DesiredAngles[2] = 10;
+    DesiredAngles[3] = 5;
+    DesiredAngles[4] = 10;
     DesiredAngles[jointEff] = 0;
 
     std::vector<Vector3d> Magnetisations(jointNo);

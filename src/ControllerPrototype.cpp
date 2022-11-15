@@ -6,8 +6,8 @@ int threshold_low = 140;
 int threshold_high = 255;
 int link_lenght = 80;
 
-double upperError  = 3.7;
-double lowError = 1;
+double upperError  = 3.7e3;
+double lowError = 1.5e3;
 
 Mat IntroducerMask(Mat src){
     Mat src_GRAY, element;
@@ -37,7 +37,7 @@ double meanError(std::vector<double> &desired, std::vector<double> &observed){
     }
     error = sum / desired.size();
 
-    return error;
+    return error * 1000;
 }
 
 
@@ -162,11 +162,11 @@ int main(int argc, char* argv[]){
     std::vector<Vector3d> AppliedFields;
 
     std::vector<int> DesiredAngles(jointNo);
-    DesiredAngles[0] = 12;
-    DesiredAngles[1] = 4;
-    DesiredAngles[2] = 4;
-    DesiredAngles[3] = 3.8;
-    DesiredAngles[4] = 4;
+    DesiredAngles[0] = 0;
+    DesiredAngles[1] = 10;
+    DesiredAngles[2] = 10;
+    DesiredAngles[3] = 5;
+    DesiredAngles[4] = 10;
     DesiredAngles[jointEff] = 0;
 
     std::vector<Vector3d> Magnetisations(jointNo);
@@ -295,9 +295,8 @@ int main(int argc, char* argv[]){
         drawContours(post_img, contours, -1, Scalar(255,255,0));
         
         std::vector<double> angles; 
-        std::vector<double> desiredAngles = {12,4,4,3.8,4};
+        std::vector<double> desiredAngles = std::vector<double>(DesiredAngles.begin(), DesiredAngles.end()-1);
         std::vector<Point> idealPoints;
-        Point p0 = Point{-2000,2000};
         if(p0 == Point{-2000,2000}) p0 = Joints[0];
 
         idealPoints = computeIdealPoints(p0, desiredAngles);
@@ -315,7 +314,6 @@ int main(int argc, char* argv[]){
         // std::vector<double> dAngleSlice = std::vector<double>(desiredAngles.begin(), desiredAngles.begin()+angles.size());         
         std::vector<double> dAngleSlice = desiredAngles;
         double error = meanError(dAngleSlice, angles);
-        std::cout << "Given field " << field << " Error: " << error << "\n";
         std::cout << "\n\n---------------------------------------------------------\n\n";
         if(abs(error) > upperError){
             std::cout << "Error " << error << " too large, adjusting stiffness assumptions\n";
@@ -336,8 +334,8 @@ int main(int argc, char* argv[]){
             std::cout << "Error " << error << " just small enough, adjusting field assumptions\n";
             std::cout << "Before any changes, field\n" << field << "\n";
             
-            bx_add += field(0) * 0.2;
-            bz_add += field(2) * 0.2;
+            field(0) += field(0) * 0.2;
+            field(2) += field(2) * 0.2;
 
         } else if (field(0) > 25 || abs(field(2)) > 15) {
             video_out.write(post_img);
@@ -349,8 +347,8 @@ int main(int argc, char* argv[]){
             std::cout << "continue\n";
             continue;
         }
-        field(0) += bx_add;
-        field(2) += bz_add;
+        // field(0) += bx_add;
+        // field(2) += bz_add;
         std::cout << "After the changes are made, field\n" << field << "\nE multiplier= " << EMulitplier << "\n";
         mid.set3DField(field);
         // }
@@ -363,7 +361,7 @@ int main(int argc, char* argv[]){
 
         imshow("Post", post_img);
         video_out.write(post_img);
-        char c= (char)waitKey(10e2);
+        char c= (char)waitKey(0);
         if(c==27) break;
         
     }
