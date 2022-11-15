@@ -2,8 +2,9 @@
 #include "precomputation.hpp"
 #include "HCoilMiddlewareLib/HCoilMiddlewareLib.hpp"
 
-int threshold_low = 110;
+int threshold_low = 140;
 int threshold_high = 255;
+int link_lenght = 80;
 
 Mat IntroducerMask(Mat src){
     Mat src_GRAY, element;
@@ -35,6 +36,67 @@ double meanError(std::vector<double> &desired, std::vector<double> &observed){
 
     return error;
 }
+
+
+
+
+
+template<typename T>
+double avgVect(std::vector<T> inputVec){
+    double avg, sum = 0;
+
+    for(auto i : inputVec){
+        sum += i;
+    }
+    avg = sum / inputVec.size();
+    return avg;
+}
+
+
+std::vector<double> computeAngles(std::vector<Point> Joints){
+    std::vector<double> angles;
+    std::vector<Point> vects;
+
+    Joints.insert(Joints.begin(), Point(Joints[0].x, 0));
+    for(int i = 1; i < Joints.size(); i++){
+        vects.push_back(Point{Joints[i].x - Joints[i-1].x, Joints[i].y - Joints[i-1].y}  );
+    }
+    for(int i = 0; i < vects.size()-1; i++){
+        double dproduct = vects[i].dot(vects[i+1]);
+        double nproduct = norm(vects[i]) * norm(vects[i+1]);
+        double th = acos(dproduct/nproduct);
+        angles.push_back(th * 180 / M_PI);
+    }
+
+    return angles;
+
+}
+
+
+std::vector<Point> computeIdealPoints(Point p0, std::vector<double> desiredAngles){
+    std::vector<Point> ideal;
+
+    ideal.push_back(p0);
+    for(int i = 1; i < desiredAngles.size(); i++){
+        double angle = 0;
+        for( int k = 0; k < i; k++) angle += desiredAngles[k];
+        int xdiff = (link_lenght+35) * sin(angle * M_PI / 180);
+        int ydiff = (link_lenght+35) * cos(angle * M_PI / 180);
+        Point pn = Point{ (int) (ideal[i-1].x + xdiff), (int) ( ideal[i-1].y + ydiff )}; 
+        ideal.push_back(pn);
+    }
+
+    return ideal;
+}
+
+
+inline bool file_exists (const std::string& name) {
+    struct stat buffer;   
+    return (stat (name.c_str(), &buffer) == 0); 
+}
+
+
+
 
 std::vector<Point> findJoints(Mat post_img_masked, std::vector<std::vector<Point>> &contours){
     
@@ -96,11 +158,11 @@ int main(int argc, char* argv[]){
     std::vector<Vector3d> AppliedFields;
 
     std::vector<int> DesiredAngles(jointNo);
-    DesiredAngles[0] = -21;
-    DesiredAngles[1] = -29;
-    DesiredAngles[2] = -38;
-    DesiredAngles[3] = -47;
-    DesiredAngles[4] = -45;
+    DesiredAngles[0] = 12;
+    DesiredAngles[1] = 4;
+    DesiredAngles[2] = 4;
+    DesiredAngles[3] = 4;
+    DesiredAngles[4] = 4;
     DesiredAngles[jointEff] = 0;
 
     std::vector<Vector3d> Magnetisations(jointNo);
@@ -143,6 +205,10 @@ int main(int argc, char* argv[]){
     MiddlewareLayer mid(true);
     mid.set3DField(field(0), field(1), field(2));
 
+
+
+    
+
     Mat pre_img, post_img, intr_mask;
     Pylon::PylonInitialize();
     Pylon::CImageFormatConverter formatConverter;
@@ -170,15 +236,29 @@ int main(int argc, char* argv[]){
     pre_img = imread("../IntrPicture.png", IMREAD_COLOR);
     
     int rcols, rrows;
-    rcols = pre_img.rows;
-    rrows = pre_img.cols;
+    rcols = pre_img.cols;
+    rrows = pre_img.rows;
     
+    /**
+     * VIDEO OUTPUT WRITE
+     * 
+     */
+    std::string outputPath = "C_PROTOTYPE.avi";
 
-    // resize(pre_img, pre_img, Size(rrows, rcols), INTER_LINEAR);
-    // Mat pre_img1 = Mat::zeros(Size(rrows, rcols), CV_8UC3);
+    while(file_exists(outputPath)){
+        outputPath += "_1";
+    }
+
+
+    VideoWriter video_out(outputPath, VideoWriter::fourcc('M', 'J', 'P', 'G'), 10, 
+                Size(rcols, rrows));
+
+    // resize(pre_img, pre_img, Size(rcols, rrows), INTER_LINEAR);
+    // Mat pre_img1 = Mat::zeros(Size(rcols, rrows), CV_8UC3);
     // intr_mask = IntroducerMask(pre_img1);
     intr_mask = IntroducerMask(pre_img);
     int jointsCached = 0;
+    Point p0 = Point{-2000,2000};
 
     while(camera.IsGrabbing()){
         camera.RetrieveResult(5000, ptrGrabResult, Pylon::TimeoutHandling_ThrowException);
@@ -190,7 +270,7 @@ int main(int argc, char* argv[]){
         {
             break;
         }
-        resize(post_img, post_img, Size(rrows, rcols), INTER_LINEAR);
+        resize(post_img, post_img, Size(rcols, rrows), INTER_LINEAR);
         Mat post_img_grey, post_img_th;
         Mat post_img_masked = Mat::zeros(Size(rrows,rcols), CV_8UC1);
 
@@ -212,46 +292,54 @@ int main(int argc, char* argv[]){
         
         // if(JointsObserved != jointsCached){
             std::vector<double> angles;
-            std::vector<double> desiredAngles = {-21,-29,-38,-47,-45};
-            for(int i = 1; i < JointsObserved; i++){
-                if(Joints[i].y - Joints[i-1].y == 0) continue;
-                double ratio = ( Joints[i].x - Joints[i-1].x ) / ( Joints[i].y - Joints[i-1].y );
-                double theta = atan(ratio);
-                if(theta < 0) theta = M_PI_2 - abs(theta);
-                angles.push_back(theta * 180 / M_PI_2);
+            std::vector<double> desiredAngles = std::vector<double>(DesiredAngles.begin(), DesiredAngles.end()-1);
+            
+            angles = computeAngles(Joints);
+            std::vector<Point> idealPoints;
+            if(p0 == Point{-2000,2000}) p0 = Joints[0];
+
+            idealPoints = computeIdealPoints(p0, desiredAngles);
+            
+            for(int i = 0; i < idealPoints.size()-1; i++){
+                line(post_img, idealPoints[i], idealPoints[i+1], Scalar(0,0,255));
+                circle(post_img, idealPoints[i], 2, Scalar(255,0,0));
+                std::cout << "point " << idealPoints[i];
             }
-            jointsCached = JointsObserved;
-            std::vector<double> dAngleSlice = std::vector<double>(desiredAngles.begin(), desiredAngles.begin()+angles.size());         
-            double error = meanError(dAngleSlice, angles);
-            std::cout << "Given field " << field << " Error: " << error << "\n";
-
-            if(abs(error) > 20){
-                std::cout << "Error too large, adjusting stiffness assumptions\n";
-                std::cout << "Before any changes, field\n" << field << "\nE multiplier= " << EMulitplier << "\n";
-                EMulitplier++;
-                if(EMulitplier > 15) break;
-                adjustStiffness(iLinks, EMulitplier);
-                field = CalculateField(iLinks, iJoints, iPosVec);
-                field(1) = 0;
-                std::cout << "After the changes are made, field\n" << field << "\nE multiplier= " << EMulitplier << "\n";
-            } else if (abs(error) < 10){
-                std::cout << "Error a tad too big, adjusting field\n";
-                std::cout << "Before any changes, field\n" << field << "\n";
-                field(0) -= field(0) * 0.1;
-                field(2) -= field(2) * 0.1;
-                std::cout << "After changes, field\n" << field << "\n";
-            } else continue;
 
 
 
 
+            // std::vector<double> dAngleSlice = std::vector<double>(desiredAngles.begin(), desiredAngles.begin()+angles.size());         
+            // double error = meanError(dAngleSlice, angles);
+            // std::cout << "Given field " << field << " Error: " << error << "\n";
 
+            // if(abs(error) > 20){
+            //     std::cout << "Error too large, adjusting stiffness assumptions\n";
+            //     std::cout << "Before any changes, field\n" << field << "\nE multiplier= " << EMulitplier << "\n";
+            //     EMulitplier++;
+            //     if(EMulitplier > 15) break;
+            //     adjustStiffness(iLinks, EMulitplier);
+            //     field = CalculateField(iLinks, iJoints, iPosVec);
+            //     field(1) = 0;
+            //     std::cout << "After the changes are made, field\n" << field << "\nE multiplier= " << EMulitplier << "\n";
+            // } else if (abs(error) < 10){
+            //     std::cout << "Error a tad too big, adjusting field\n";
+            //     std::cout << "Before any changes, field\n" << field << "\n";
+            //     field(0) -= field(0) * 0.1;
+            //     field(2) -= field(2) * 0.1;
+            //     std::cout << "After changes, field\n" << field << "\n";
+            // } else continue;
 
 
 
 
 
-            mid.set3DField(field(0), field(1), field(2));
+
+
+
+
+
+            // mid.set3DField(field(0), field(1), field(2));
         // }
         for(int i = 1; i < JointsObserved; i++){
             Rect recta(Joints[i], Joints[i-1]);
@@ -259,10 +347,13 @@ int main(int argc, char* argv[]){
             line(post_img, Joints[i], Joints[i-1], Scalar(255,0,0), 1);
         }
         imshow("Post", post_img);
-        char c= (char)waitKey(0);
+        video_out.write(post_img);
+        char c= (char)waitKey(10e2);
         if(c==27) break;
         
     }
+    video_out.release();
+    mid.~MiddlewareLayer();
     Pylon::PylonTerminate();
     destroyAllWindows();
     return 0;
