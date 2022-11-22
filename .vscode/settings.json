@@ -67,5 +67,6 @@
         "forward_list": "cpp",
         "unordered_set": "cpp"
     },
-    "C_Cpp.intelliSenseEngineFallback": "Enabled"
+    "C_Cpp.intelliSenseEngineFallback": "Enabled",
+    "ros.distro": "noetic"
 }
