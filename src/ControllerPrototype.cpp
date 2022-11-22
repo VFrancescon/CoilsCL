@@ -29,15 +29,15 @@ Mat IntroducerMask(Mat src){
     return src_GRAY;
 
 }
-
-double meanError(std::vector<double> &desired, std::vector<double> &observed){
-    double error, sum = 0;
+int meanError(std::vector<double> &desired, std::vector<double> &observed){
+    double d_error, sum = 0;
+    int error;
     for(size_t i = 0; i < desired.size(); i++){
         sum += desired[i] - observed[i];
     }
-    error = sum / desired.size();
+    d_error = sum / desired.size();
 
-    return error * 1000;
+    return (int) (d_error * 1000);
 }
 
 
@@ -313,7 +313,7 @@ int main(int argc, char* argv[]){
         jointsCached = JointsObserved;
         // std::vector<double> dAngleSlice = std::vector<double>(desiredAngles.begin(), desiredAngles.begin()+angles.size());         
         std::vector<double> dAngleSlice = desiredAngles;
-        double error = meanError(dAngleSlice, angles);
+        int error = meanError(dAngleSlice, angles);
         std::cout << "\n\n---------------------------------------------------------\n\n";
         if(abs(error) > upperError){
             std::cout << "Error " << error << " too large, adjusting stiffness assumptions\n";
