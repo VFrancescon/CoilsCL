@@ -1,7 +1,5 @@
 #include <cameraGeneric.hpp>
 
-int threshold_low = 20;
-int threshold_high = 255;
 std::string pre_img_path = "/home/vittorio/coilsCL/imgs/Pre_Insertion_IMG.png";
 std::string post_img_path = "/home/vittorio/coilsCL/imgs/Post_Insertion_IMG.png";
 

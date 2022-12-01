@@ -40,7 +40,7 @@ int main(int argc, char* argv[]){
 
     //resizing the image for faster processing
     int rows = img.rows / 2;
-    int cols = img.cols / 2; 
+    int cols = img.cols * 3 / 8; 
     resize(img, img, Size(rows, cols), INTER_LINEAR);
 
     while(camera.IsGrabbing()){
@@ -58,11 +58,11 @@ int main(int argc, char* argv[]){
         //make image smaller 
         resize(img, img, Size(rows, cols), INTER_LINEAR);
         // flip(img, img, 1);
-        line( img, Point(0, cols/3), Point(rows, cols/3), Scalar(0,0,0) ); //horizontal lines
-        line( img, Point(0, cols*2/3), Point(rows, cols/3*2), Scalar(0,0,0) );
+        // line( img, Point(0, cols/3), Point(rows, cols/3), Scalar(0,0,0) ); //horizontal lines
+        // line( img, Point(0, cols*2/3), Point(rows, cols/3*2), Scalar(0,0,0) );
 
-        line( img, Point(rows/3, 0), Point(rows/3, cols), Scalar(0,0,0) ); //horizontal lines
-        line( img, Point(rows*2/3), Point(rows*2/3, cols), Scalar(0,0,0) );
+        // line( img, Point(rows/3, 0), Point(rows/3, cols), Scalar(0,0,0) ); //horizontal lines
+        // line( img, Point(rows*2/3), Point(rows*2/3, cols), Scalar(0,0,0) );
 
         //crosshair
         line(img, Point(rows/2-20, cols/2), Point(rows/2+20, cols/2), Scalar(0,0,0));

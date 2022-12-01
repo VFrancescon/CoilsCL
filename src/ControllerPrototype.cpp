@@ -2,12 +2,10 @@
 #include "precomputation.hpp"
 #include "HCoilMiddlewareLib/HCoilMiddlewareLib.hpp"
 
-int threshold_low = 140;
-int threshold_high = 255;
-int link_lenght = 80;
 
-double upperError  = 3.7e3;
-double lowError = 1.5e3;
+
+double upperError  = 5.6e3;
+double lowError = 2e3;
 
 Mat IntroducerMask(Mat src){
     Mat src_GRAY, element;
@@ -83,8 +81,8 @@ std::vector<Point> computeIdealPoints(Point p0, std::vector<double> desiredAngle
     for(int i = 1; i < desiredAngles.size(); i++){
         double angle = 0;
         for( int k = 0; k < i; k++) angle += desiredAngles[k];
-        int xdiff = (link_lenght+35) * sin(angle * M_PI / 180);
-        int ydiff = (link_lenght+35) * cos(angle * M_PI / 180);
+        int xdiff = (link_lenght+15) * sin(angle * M_PI / 180);
+        int ydiff = (link_lenght+15) * cos(angle * M_PI / 180);
         Point pn = Point{ (int) (ideal[i-1].x + xdiff), (int) ( ideal[i-1].y + ydiff )}; 
         ideal.push_back(pn);
     }
@@ -128,7 +126,6 @@ std::vector<Point> findJoints(Mat post_img_masked, std::vector<std::vector<Point
     std::sort(cntLine.begin(), cntLine.end(), yWiseSort);
     // std::reverse(cntLine.begin(), cntLine.end());
     
-    int link_lenght = 80;
     std::vector<Point> Joints;
     int jointCount = (int) cntLine.size() / link_lenght;
     
@@ -163,9 +160,9 @@ int main(int argc, char* argv[]){
 
     std::vector<int> DesiredAngles(jointNo);
     DesiredAngles[0] = 0;
-    DesiredAngles[1] = 10;
-    DesiredAngles[2] = 10;
-    DesiredAngles[3] = 5;
+    DesiredAngles[1] = 5;
+    DesiredAngles[2] = 5;
+    DesiredAngles[3] = 10;
     DesiredAngles[4] = 10;
     DesiredAngles[jointEff] = 0;
 
@@ -317,7 +314,7 @@ int main(int argc, char* argv[]){
         std::cout << "\n\n---------------------------------------------------------\n\n";
         if(abs(error) > upperError){
             std::cout << "Error " << error << " too large, adjusting stiffness assumptions\n";
-            std::cout << "Before any changes, field\n" << field << "\nE multiplier= " << EMulitplier << "\n";
+            // std::cout << "Before any changes, field\n" << field << "\nE multiplier= " << EMulitplier << "\n";
             
             EMulitplier++;
             if(EMulitplier > 15) {
@@ -332,7 +329,7 @@ int main(int argc, char* argv[]){
             
         } else if (abs(error) < upperError && abs(error) > lowError){
             std::cout << "Error " << error << " just small enough, adjusting field assumptions\n";
-            std::cout << "Before any changes, field\n" << field << "\n";
+            // std::cout << "Before any changes, field\n" << field << "\n";
             
             field(0) += field(0) * 0.2;
             field(2) += field(2) * 0.2;
@@ -340,12 +337,13 @@ int main(int argc, char* argv[]){
         } else if (field(0) > 25 || abs(field(2)) > 15) {
             video_out.write(post_img);
             std::cout << "Field requested is too high";
-            continue;
+            break;
         }
         else{
             video_out.write(post_img);
-            std::cout << "continue\n";
-            continue;
+            for(auto i: angles ) std::cout << "angles: " << i << " ";
+            std::cout << "\nSuccess!\n";
+            break;
         }
         // field(0) += bx_add;
         // field(2) += bz_add;
@@ -367,8 +365,8 @@ int main(int argc, char* argv[]){
     }
     video_out.release();
     mid.~MiddlewareLayer();
-    destroyAllWindows();
-    Pylon::PylonTerminate();
+    // destroyAllWindows();
+    // Pylon::PylonTerminate();
     return 0;
 }
 

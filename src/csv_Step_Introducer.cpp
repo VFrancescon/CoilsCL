@@ -8,8 +8,6 @@
 
 std::string home_path = "home/vittorio/";
 
-int threshold_low = 80;
-int threshold_high = 255;
 std::vector<Point> findJoints(Mat post_img_masked, std::vector<std::vector<Point>> &contours);
 
 Mat IntroducerMask(Mat src){
