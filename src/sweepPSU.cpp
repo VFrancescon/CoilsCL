@@ -23,13 +23,13 @@ int main(int argc, char* argv[]){
         std::cout << "Slowly stepping to -maxAbs\n";
         psu.WriteCurrent(maxAbs/4);
         std::cout << "One quarter" << -maxAbs/4  << "\n";
-        usleep(10*ONEMILLION);
+        usleep(2*ONEMILLION);
         psu.WriteCurrent(maxAbs/2);
         std::cout << "Half" << -maxAbs/2 << "\n";
-        usleep(10*ONEMILLION);
+        usleep(2*ONEMILLION);
         psu.WriteCurrent(maxAbs/4*3);
         std::cout << "Three quarter" << -maxAbs/4 * 3 << "\n";
-        usleep(10*ONEMILLION);
+        usleep(2*ONEMILLION);
 
 
 
@@ -40,15 +40,17 @@ int main(int argc, char* argv[]){
             std::cout << "Setting current= " << -current << "\n";
             psu.WriteCurrent(current);
             std::cout << "current set. going to sleep\n\n";
-            usleep(10*ONEMILLION);
+            usleep(2*ONEMILLION);
         }
         psu.setPolarity(0x01);
+        usleep(2*ONEMILLION);
+
         for(int i = 30; i < maxAbs+1; i = i + step){
             double current = (double) i;
             std::cout << "Setting current= " << current << "\n";
             psu.WriteCurrent(current);
             std::cout << "current set. going to sleep\n\n";
-            usleep(10*ONEMILLION);
+            usleep(2*ONEMILLION);
         }
 
         psu.WriteVI(0,0);

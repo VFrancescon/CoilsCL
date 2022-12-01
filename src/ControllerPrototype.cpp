@@ -308,8 +308,8 @@ int main(int argc, char* argv[]){
         // if(JointsObserved != jointsCached){
 
         jointsCached = JointsObserved;
-        // std::vector<double> dAngleSlice = std::vector<double>(desiredAngles.begin(), desiredAngles.begin()+angles.size());         
-        std::vector<double> dAngleSlice = desiredAngles;
+        std::vector<double> dAngleSlice = std::vector<double>(desiredAngles.end()-angles.size(), desiredAngles.end());         
+        // std::vector<double> dAngleSlice = desiredAngles;
         int error = meanError(dAngleSlice, angles);
         std::cout << "\n\n---------------------------------------------------------\n\n";
         
@@ -333,6 +333,7 @@ int main(int argc, char* argv[]){
         //Scenario 2. LowS < e < HighS -> Field + P*signFlag
         //Scenario 3. e > HighS -> K += signFlag
         int signFlag = (error < 0) ? -1 : 1;
+        std::cout << "Error " << error << "\n";
         error = abs(error);
 
         if( error < lowError ) {
@@ -340,19 +341,23 @@ int main(int argc, char* argv[]){
             video_out.write(post_img);
             char c= (char)waitKey(0);
             continue;
-        } else if ( error > lowError && error < highError){
+        } else if ( error > lowError && error < upperError){
             field += field * 0.1 * signFlag;
-        } else if ( error > highError){
+            std::cout << "Adjusting field\n";
+        } else if ( error > upperError){
             EMulitplier += signFlag;
             adjustStiffness(iLinks, EMulitplier);
             CalculateField(iLinks, iJoints, iPosVec);
+            std::cout << "Adjusting E\n";
         }
+        
+        std::cout << "E: " << EMulitplier << " applied field:\n" << field << "\n";
         mid.set3DField(field);
 
 
         imshow("Post", post_img);
         video_out.write(post_img);
-        char c= (char)waitKey(0);
+        char c= (char)waitKey(5e2);
         if(c==27) break;
         
     }

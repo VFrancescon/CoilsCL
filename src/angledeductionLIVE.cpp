@@ -149,7 +149,7 @@ int main(int argc, char* argv[]){
         Joints = findJoints(post_img_masked, contours);
         
         std::vector<double> angles; 
-        std::vector<double> desiredAngles = {12,4,4,3.8,4};
+        std::vector<double> desiredAngles = {10,15,15,20,20};
         std::vector<Point> idealPoints;
         if(p0 == Point{-2000,2000}) p0 = Joints[0];
 
