@@ -312,50 +312,43 @@ int main(int argc, char* argv[]){
         std::vector<double> dAngleSlice = desiredAngles;
         int error = meanError(dAngleSlice, angles);
         std::cout << "\n\n---------------------------------------------------------\n\n";
-        if(abs(error) > upperError){
-            std::cout << "Error " << error << " too large, adjusting stiffness assumptions\n";
-            // std::cout << "Before any changes, field\n" << field << "\nE multiplier= " << EMulitplier << "\n";
-            
-            EMulitplier++;
-            if(EMulitplier > 15) {
-                
-                video_out.write(post_img);
-                break;
-                
-                }
-            adjustStiffness(iLinks, EMulitplier);
-            field = CalculateField(iLinks, iJoints, iPosVec);
-            field(1) = 0;
-            
-        } else if (abs(error) < upperError && abs(error) > lowError){
-            std::cout << "Error " << error << " just small enough, adjusting field assumptions\n";
-            // std::cout << "Before any changes, field\n" << field << "\n";
-            
-            field(0) += field(0) * 0.2;
-            field(2) += field(2) * 0.2;
-
-        } else if (field(0) > 25 || abs(field(2)) > 15) {
-            video_out.write(post_img);
-            std::cout << "Field requested is too high";
-            break;
-        }
-        else{
-            video_out.write(post_img);
-            for(auto i: angles ) std::cout << "angles: " << i << " ";
-            std::cout << "\nSuccess!\n";
-            break;
-        }
-        // field(0) += bx_add;
-        // field(2) += bz_add;
-        std::cout << "After the changes are made, field\n" << field << "\nE multiplier= " << EMulitplier << "\n";
-        mid.set3DField(field);
-        // }
         
-        // for(int i = 1; i < JointsObserved; i++){
-        //     Rect recta(Joints[i], Joints[i-1]);
-        //     rectangle(post_img, recta, Scalar(0,0,255), 1);
-        //     line(post_img, Joints[i], Joints[i-1], Scalar(255,0,0), 1);
-        // }
+
+        //Fetched error e
+        //Now we have N scenarios
+        //And thresholds LowS, HighS
+        //And adjustment factor P
+        //Scenario 1. -LowS < e < +LowS -> Do nothing
+        //Scenario 2. -HighS < e < -LowS -> Field - P
+        //Scenario 3. e < -HighS -> K--
+        //Scenario 4. +LowS > e > +HighS -> Field + P
+        //Scenario 5. e > +HighS -> K++
+
+
+        //Slightly less verbose
+        //if e < 0: signFlag = -1
+        //else signFlag = 1
+        //then e = abs(e)
+        //Scenario 1. e < LowS -> Do Nothing
+        //Scenario 2. LowS < e < HighS -> Field + P*signFlag
+        //Scenario 3. e > HighS -> K += signFlag
+        int signFlag = (error < 0) ? -1 : 1;
+        error = abs(error);
+
+        if( error < lowError ) {
+            imshow("Post", post_img);
+            video_out.write(post_img);
+            char c= (char)waitKey(0);
+            continue;
+        } else if ( error > lowError && error < highError){
+            field += field * 0.1 * signFlag;
+        } else if ( error > highError){
+            EMulitplier += signFlag;
+            adjustStiffness(iLinks, EMulitplier);
+            CalculateField(iLinks, iJoints, iPosVec);
+        }
+        mid.set3DField(field);
+
 
         imshow("Post", post_img);
         video_out.write(post_img);

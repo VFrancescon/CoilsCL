@@ -187,9 +187,9 @@ int main(int argc, char* argv[]){
         th4.push_back(angles[3]);
         th5.push_back(angles[4]);
         
-        //     std::vector<double> dAngleSlice = std::vector<double>(desiredAngles.begin(), desiredAngles.begin()+angles.size());         
-        //     double error = meanError(dAngleSlice, angles);
-        //     std::cout << "Error: " << error << "\n";
+        std::vector<double> dAngleSlice = std::vector<double>(desiredAngles.begin(), desiredAngles.begin()+angles.size());         
+        double error = meanError(dAngleSlice, angles);
+        std::cout << "Error: " << error << "\n";
         // }
         for(int i = 1; i < JointsObserved; i++){
             Rect recta(Joints[i], Joints[i-1]);
