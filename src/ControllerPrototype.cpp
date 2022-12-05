@@ -159,7 +159,7 @@ int main(int argc, char* argv[]){
     std::vector<Vector3d> AppliedFields;
 
     std::vector<int> DesiredAngles(jointNo);
-    DesiredAngles[0] = 0;
+    DesiredAngles[0] = 10;
     DesiredAngles[1] = 5;
     DesiredAngles[2] = 5;
     DesiredAngles[3] = 10;
@@ -219,8 +219,8 @@ int main(int argc, char* argv[]){
     Pylon::CFloatParameter(camera.GetNodeMap(), "ExposureTime").SetValue(20000.0);
     Size frameSize= Size((int)width.GetValue(), (int)height.GetValue());
     int codec = VideoWriter::fourcc('M', 'J', 'P', 'G');
-    width.TrySetValue(640*3, Pylon::IntegerValueCorrection_Nearest);
-    height.TrySetValue(480*3, Pylon::IntegerValueCorrection_Nearest);
+    width.TrySetValue(1920, Pylon::IntegerValueCorrection_Nearest);
+    height.TrySetValue(1216, Pylon::IntegerValueCorrection_Nearest);
     Pylon::CPixelTypeMapper pixelTypeMapper( &pixelFormat);
     Pylon::EPixelType pixelType = pixelTypeMapper.GetPylonPixelTypeFromNodeValue(pixelFormat.GetIntValue());
     
@@ -230,11 +230,10 @@ int main(int argc, char* argv[]){
     camera.RetrieveResult(5000, ptrGrabResult, Pylon::TimeoutHandling_ThrowException);
     const uint8_t* preImageBuffer = (uint8_t*) ptrGrabResult->GetBuffer();
     formatConverter.Convert(pylonImage, ptrGrabResult);
-    pre_img = imread("../IntrPicture.png", IMREAD_COLOR);
+    pre_img = cv::Mat(ptrGrabResult->GetHeight(), ptrGrabResult->GetWidth(), CV_8UC3, (uint8_t *) pylonImage.GetBuffer());
     
-    int rcols, rrows;
-    rcols = pre_img.cols;
-    rrows = pre_img.rows;
+    int rrows = pre_img.rows / 2;
+    int rcols = pre_img.cols * 3 / 8; 
     
     /**
      * VIDEO OUTPUT WRITE
@@ -332,7 +331,7 @@ int main(int argc, char* argv[]){
         //Scenario 1. e < LowS -> Do Nothing
         //Scenario 2. LowS < e < HighS -> Field + P*signFlag
         //Scenario 3. e > HighS -> K += signFlag
-        int signFlag = (error < 0) ? -1 : 1;
+        int signFlag = (error > 0) ? -1 : 1;
         std::cout << "Error " << error << "\n";
         error = abs(error);
 
@@ -350,8 +349,13 @@ int main(int argc, char* argv[]){
             CalculateField(iLinks, iJoints, iPosVec);
             std::cout << "Adjusting E\n";
         }
-        
+
         std::cout << "E: " << EMulitplier << " applied field:\n" << field << "\n";
+        
+        if( abs(field(0)) > 20 && abs(field(2)) > 15 && abs(field(1)) > 20) break;
+        if( EMulitplier < 0 ) break;
+
+
         mid.set3DField(field);
 
 

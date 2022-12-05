@@ -47,8 +47,8 @@ int main(int argc, char* argv[])
     Pylon::CFloatParameter(camera.GetNodeMap(), "ExposureTime").SetValue(20000.0);
     Size frameSize= Size((int)width.GetValue(), (int)height.GetValue());
     int codec = VideoWriter::fourcc('M', 'J', 'P', 'G');
-    width.TrySetValue(640*3, Pylon::IntegerValueCorrection_Nearest);
-    height.TrySetValue(480*3, Pylon::IntegerValueCorrection_Nearest);
+    width.TrySetValue(1920, Pylon::IntegerValueCorrection_Nearest);
+    height.TrySetValue(1216, Pylon::IntegerValueCorrection_Nearest);
     // Pylon::CFloatParameter(camera.GetNodeMap(), "ExposureTimeAbs").SetValue(20000.0);
     Pylon::CPixelTypeMapper pixelTypeMapper( &pixelFormat);
     Pylon::EPixelType pixelType = pixelTypeMapper.GetPylonPixelTypeFromNodeValue(pixelFormat.GetIntValue());
@@ -91,7 +91,7 @@ int main(int argc, char* argv[])
             break;
         }
         
-        int rows = frame.rows * 3 / 8;
+        int rows = frame.rows / 2;
         int cols = frame.cols * 3 / 8; 
         // make image smaller 
         resize(frame, frame, Size(rows, cols), INTER_LINEAR);

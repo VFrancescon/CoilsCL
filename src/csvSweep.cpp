@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <pylon/PylonIncludes.h>
 #include "HCoilMiddlewareLib/HCoilMiddlewareLib.hpp"
+#include <cameraGeneric.hpp>
 
 #define ONEMILLION 1000000
 #define WAITTIME 10
@@ -64,6 +65,7 @@ int main(int argc, char* argv[]){
     /***************************
     CAMERA SETUP HERE, IGNORE
     ****************************/
+    Mat img;
     auto png = Pylon::EImageFileFormat::ImageFileFormat_Png;
     Pylon::PylonInitialize();
     Pylon::CImageFormatConverter formatConverter;
@@ -74,9 +76,14 @@ int main(int argc, char* argv[]){
     Pylon::CIntegerParameter width     ( camera.GetNodeMap(), "Width");
     Pylon::CIntegerParameter height    ( camera.GetNodeMap(), "Height");
     Pylon::CEnumParameter pixelFormat  ( camera.GetNodeMap(), "PixelFormat");
+    
+    Pylon::CFloatParameter(camera.GetNodeMap(), "ExposureTime").SetValue(20000.0);
+
+    
     Size frameSize= Size((int)width.GetValue(), (int)height.GetValue());
-    width.TrySetValue(640*3, Pylon::IntegerValueCorrection_Nearest);
-    height.TrySetValue(480*3, Pylon::IntegerValueCorrection_Nearest);
+    int codec = VideoWriter::fourcc('M', 'J', 'P', 'G');
+    width.TrySetValue(1920, Pylon::IntegerValueCorrection_Nearest);
+    height.TrySetValue(1216, Pylon::IntegerValueCorrection_Nearest);
     Pylon::CPixelTypeMapper pixelTypeMapper( &pixelFormat);
     Pylon::EPixelType pixelType = pixelTypeMapper.GetPylonPixelTypeFromNodeValue(pixelFormat.GetIntValue());
     camera.StartGrabbing(Pylon::GrabStrategy_LatestImageOnly);
@@ -84,6 +91,9 @@ int main(int argc, char* argv[]){
     camera.RetrieveResult(5000, ptrGrabResult, Pylon::TimeoutHandling_ThrowException);
     const uint8_t* preImageBuffer = (uint8_t*) ptrGrabResult->GetBuffer();
     formatConverter.Convert(pylonImage, ptrGrabResult);
+    img = cv::Mat(ptrGrabResult->GetHeight(), ptrGrabResult->GetWidth(), CV_8UC3, (uint8_t *) pylonImage.GetBuffer());
+
+    
     std::string outputFileName, expName;
     expName = argv[1];
     

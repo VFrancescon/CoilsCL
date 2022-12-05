@@ -45,7 +45,7 @@ int main(int argc, char* argv[]){
 
         std::cout << "Flipping polarity\n";
         psu.setPolarity(0x00);
-        usleep(5*ONEMILLION);
+        usleep(2*ONEMILLION);
 
         for(int i = 0; i < maxAbs+1; i = i + step){
             double current = (double) i;
