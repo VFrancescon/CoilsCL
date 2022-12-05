@@ -219,8 +219,8 @@ int main(int argc, char* argv[]){
     Pylon::CFloatParameter(camera.GetNodeMap(), "ExposureTime").SetValue(20000.0);
     Size frameSize= Size((int)width.GetValue(), (int)height.GetValue());
     int codec = VideoWriter::fourcc('M', 'J', 'P', 'G');
-    width.TrySetValue(1920, Pylon::IntegerValueCorrection_Nearest);
-    height.TrySetValue(1216, Pylon::IntegerValueCorrection_Nearest);
+    width.TrySetValue(PYLON_WIDTH, Pylon::IntegerValueCorrection_Nearest);
+    height.TrySetValue(PYLON_HEIGHT, Pylon::IntegerValueCorrection_Nearest);
     Pylon::CPixelTypeMapper pixelTypeMapper( &pixelFormat);
     Pylon::EPixelType pixelType = pixelTypeMapper.GetPylonPixelTypeFromNodeValue(pixelFormat.GetIntValue());
     
@@ -346,7 +346,7 @@ int main(int argc, char* argv[]){
         } else if ( error > upperError){
             EMulitplier += signFlag;
             adjustStiffness(iLinks, EMulitplier);
-            CalculateField(iLinks, iJoints, iPosVec);
+            field = CalculateField(iLinks, iJoints, iPosVec);
             std::cout << "Adjusting E\n";
         }
 
@@ -361,7 +361,7 @@ int main(int argc, char* argv[]){
 
         imshow("Post", post_img);
         video_out.write(post_img);
-        char c= (char)waitKey(5e2);
+        char c= (char)waitKey(10e2);
         if(c==27) break;
         
     }

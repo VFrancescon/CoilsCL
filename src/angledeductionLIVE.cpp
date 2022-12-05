@@ -81,8 +81,8 @@ int main(int argc, char* argv[]){
     Pylon::CFloatParameter(camera.GetNodeMap(), "ExposureTime").SetValue(20000.0);
     Size frameSize= Size((int)width.GetValue(), (int)height.GetValue());
     int codec = VideoWriter::fourcc('M', 'J', 'P', 'G');
-    width.TrySetValue(640*3, Pylon::IntegerValueCorrection_Nearest);
-    height.TrySetValue(480*3, Pylon::IntegerValueCorrection_Nearest);
+    width.TrySetValue(PYLON_WIDTH, Pylon::IntegerValueCorrection_Nearest);
+    height.TrySetValue(PYLON_HEIGHT, Pylon::IntegerValueCorrection_Nearest);
     Pylon::CPixelTypeMapper pixelTypeMapper( &pixelFormat);
     Pylon::EPixelType pixelType = pixelTypeMapper.GetPylonPixelTypeFromNodeValue(pixelFormat.GetIntValue());
     camera.StartGrabbing(Pylon::GrabStrategy_LatestImageOnly);
@@ -181,11 +181,11 @@ int main(int argc, char* argv[]){
         // std::cout << "angles observed:";
         // for(auto i: angles) std::cout << " " << i << " ";
         // std::cout << "\n";
-        th1.push_back(angles[0]);
-        th2.push_back(angles[1]);
-        th3.push_back(angles[2]);
-        th4.push_back(angles[3]);
-        th5.push_back(angles[4]);
+        // th1.push_back(angles[0]);
+        // th2.push_back(angles[1]);
+        // th3.push_back(angles[2]);
+        // th4.push_back(angles[3]);
+        // th5.push_back(angles[4]);
         
         std::vector<double> dAngleSlice = std::vector<double>(desiredAngles.begin(), desiredAngles.begin()+angles.size());         
         double error = meanError(dAngleSlice, angles);
@@ -205,14 +205,14 @@ int main(int argc, char* argv[]){
     }
 
 
-    std::cout <<"Average angles\n";
-    double avg1, avg2, avg3, avg4, avg5;
-    avg1 = avgVect(th1);
-    avg2 = avgVect(th2);
-    avg3 = avgVect(th3);
-    avg4 = avgVect(th4);
-    avg5 = avgVect(th5);
-    std::cout << avg1 << " " << avg2 << " " << avg3 << " " << avg4 << " " << avg5 << "\n";
+    // std::cout <<"Average angles\n";
+    // double avg1, avg2, avg3, avg4, avg5;
+    // avg1 = avgVect(th1);
+    // avg2 = avgVect(th2);
+    // avg3 = avgVect(th3);
+    // avg4 = avgVect(th4);
+    // avg5 = avgVect(th5);
+    // std::cout << avg1 << " " << avg2 << " " << avg3 << " " << avg4 << " " << avg5 << "\n";
 
     
     Pylon::PylonTerminate();

@@ -11,9 +11,12 @@
 using namespace cv;
 
 
-int threshold_low = 108;
+int threshold_low = 110;
 int threshold_high = 255;
 int link_lenght = 60;
+
+int PYLON_WIDTH = 2048;
+int PYLON_HEIGHT = 1536;
 
 Mat IntroducerMask(Mat src);
 

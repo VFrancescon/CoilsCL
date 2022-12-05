@@ -10,7 +10,7 @@ int main(int argc, char* argv[]){
     int maxAbs, step;
 
     if(argc == 3){
-        DXKDP_PSU psu("/dev/ttyUSB1", 0.1, 0.01);
+        DXKDP_PSU psu("/dev/ttyUSB2", 0.1, 0.01);
         maxAbs = std::stoi(argv[1]);
         step = std::stoi(argv[2]);
 
