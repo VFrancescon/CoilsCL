@@ -16,7 +16,7 @@ int main(int argc, char* argv[]){
 
         psu.WriteVI(60,0);
         psu.PoCtrl(0x01);
-        psu.setPolarity(0x00);
+        psu.setPolarity(0x01);
         usleep(ONEMILLION);
 
 
@@ -35,17 +35,19 @@ int main(int argc, char* argv[]){
 
         std::cout << "Stepped to -maxAbs. Press enter to begin";
         std::cin.get();
-        for(int i = maxAbs; i != 30; i = i - step){
+        for(int i = maxAbs; i != 0; i = i - step){
             double current = (double) i;
             std::cout << "Setting current= " << -current << "\n";
             psu.WriteCurrent(current);
             std::cout << "current set. going to sleep\n\n";
             usleep(2*ONEMILLION);
         }
-        psu.setPolarity(0x01);
-        usleep(2*ONEMILLION);
 
-        for(int i = 30; i < maxAbs+1; i = i + step){
+        std::cout << "Flipping polarity\n";
+        psu.setPolarity(0x00);
+        usleep(5*ONEMILLION);
+
+        for(int i = 0; i < maxAbs+1; i = i + step){
             double current = (double) i;
             std::cout << "Setting current= " << current << "\n";
             psu.WriteCurrent(current);
