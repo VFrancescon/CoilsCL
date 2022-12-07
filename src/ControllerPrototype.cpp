@@ -4,8 +4,8 @@
 
 
 
-double upperError  = 5.6e3;
-double lowError = 2e3;
+double upperError  = 10e3;
+double lowError = 7e3;
 
 Mat IntroducerMask(Mat src){
     Mat src_GRAY, element;
@@ -74,15 +74,15 @@ std::vector<double> computeAngles(std::vector<Point> Joints){
 }
 
 
-std::vector<Point> computeIdealPoints(Point p0, std::vector<double> desiredAngles){
+std::vector<Point> computeIdealPoints(Point p0, std::vector<double> desiredAngles_){
     std::vector<Point> ideal;
 
     ideal.push_back(p0);
-    for(int i = 1; i < desiredAngles.size(); i++){
+    for(int i = 1; i < desiredAngles_.size(); i++){
         double angle = 0;
-        for( int k = 0; k < i; k++) angle += desiredAngles[k];
-        int xdiff = (link_lenght+15) * sin(angle * M_PI / 180);
-        int ydiff = (link_lenght+15) * cos(angle * M_PI / 180);
+        for( int k = 0; k < i; k++) angle += desiredAngles_[k];
+        int xdiff = (link_lenght) * sin(angle * M_PI / 180);
+        int ydiff = (link_lenght) * cos(angle * M_PI / 180);
         Point pn = Point{ (int) (ideal[i-1].x + xdiff), (int) ( ideal[i-1].y + ydiff )}; 
         ideal.push_back(pn);
     }
@@ -160,10 +160,10 @@ int main(int argc, char* argv[]){
 
     std::vector<int> DesiredAngles(jointNo);
     DesiredAngles[0] = 10;
-    DesiredAngles[1] = 5;
-    DesiredAngles[2] = 5;
-    DesiredAngles[3] = 10;
-    DesiredAngles[4] = 10;
+    DesiredAngles[1] = 15;
+    DesiredAngles[2] = 15;
+    DesiredAngles[3] = 20;
+    DesiredAngles[4] = 20;
     DesiredAngles[jointEff] = 0;
 
     std::vector<Vector3d> Magnetisations(jointNo);
@@ -196,6 +196,7 @@ int main(int argc, char* argv[]){
     // Vector3d field = RotateField(solution, reconciliationAngles);
     Vector3d field = CalculateField(iLinks, iJoints, iPosVec);
     field(1) = 0;
+    std::cout << "Initial answer: " << field << "\n";
     
 
 
@@ -232,7 +233,7 @@ int main(int argc, char* argv[]){
     formatConverter.Convert(pylonImage, ptrGrabResult);
     pre_img = cv::Mat(ptrGrabResult->GetHeight(), ptrGrabResult->GetWidth(), CV_8UC3, (uint8_t *) pylonImage.GetBuffer());
     
-    int rrows = pre_img.rows / 2;
+    int rrows = pre_img.rows  * 3 / 8;
     int rcols = pre_img.cols * 3 / 8; 
     
     /**
@@ -247,12 +248,12 @@ int main(int argc, char* argv[]){
 
 
     VideoWriter video_out(outputPath, VideoWriter::fourcc('M', 'J', 'P', 'G'), 10, 
-                Size(rcols, rrows));
+                Size(rrows, rcols));
 
 
 
-    // resize(pre_img, pre_img, Size(rcols, rrows), INTER_LINEAR);
-    // Mat pre_img1 = Mat::zeros(Size(rcols, rrows), CV_8UC3);
+    // resize(pre_img, pre_img, Size(rrows, rcols), INTER_LINEAR);
+    // Mat pre_img1 = Mat::zeros(Size(rrows, rcols), CV_8UC3);
     // intr_mask = IntroducerMask(pre_img1);
     intr_mask = IntroducerMask(pre_img);
     int jointsCached = 0;
@@ -271,9 +272,9 @@ int main(int argc, char* argv[]){
         {
             break;
         }
-        resize(post_img, post_img, Size(rcols, rrows), INTER_LINEAR);
+        resize(post_img, post_img, Size(rrows, rcols), INTER_LINEAR);
         Mat post_img_grey, post_img_th;
-        Mat post_img_masked = Mat::zeros(Size(rrows,rcols), CV_8UC1);
+        Mat post_img_masked = Mat::zeros(Size(rrows, rcols), CV_8UC1);
 
         cvtColor(post_img, post_img_grey, COLOR_BGR2GRAY);
         blur(post_img_grey, post_img_grey, Size(5,5));
@@ -291,11 +292,11 @@ int main(int argc, char* argv[]){
         drawContours(post_img, contours, -1, Scalar(255,255,0));
         
         std::vector<double> angles; 
-        std::vector<double> desiredAngles = std::vector<double>(DesiredAngles.begin(), DesiredAngles.end()-1);
+        std::vector<double> desiredAngles_ = std::vector<double>(DesiredAngles.begin(), DesiredAngles.end()-1);
         std::vector<Point> idealPoints;
         if(p0 == Point{-2000,2000}) p0 = Joints[0];
 
-        idealPoints = computeIdealPoints(p0, desiredAngles);
+        idealPoints = computeIdealPoints(p0, desiredAngles_);
         angles = computeAngles(Joints);
         for(int i = 0; i < idealPoints.size()-1; i++){
             line(post_img, idealPoints[i], idealPoints[i+1], Scalar(0,0,255));
@@ -307,8 +308,8 @@ int main(int argc, char* argv[]){
         // if(JointsObserved != jointsCached){
 
         jointsCached = JointsObserved;
-        std::vector<double> dAngleSlice = std::vector<double>(desiredAngles.end()-angles.size(), desiredAngles.end());         
-        // std::vector<double> dAngleSlice = desiredAngles;
+        std::vector<double> dAngleSlice = std::vector<double>(desiredAngles_.end()-angles.size(), desiredAngles_.end());         
+        // std::vector<double> dAngleSlice = desiredAngles_;
         int error = meanError(dAngleSlice, angles);
         std::cout << "\n\n---------------------------------------------------------\n\n";
         
@@ -331,7 +332,7 @@ int main(int argc, char* argv[]){
         //Scenario 1. e < LowS -> Do Nothing
         //Scenario 2. LowS < e < HighS -> Field + P*signFlag
         //Scenario 3. e > HighS -> K += signFlag
-        int signFlag = (error > 0) ? -1 : 1;
+        int signFlag = (error < 0) ? -1 : 1;
         std::cout << "Error " << error << "\n";
         error = abs(error);
 
@@ -339,14 +340,16 @@ int main(int argc, char* argv[]){
             imshow("Post", post_img);
             video_out.write(post_img);
             char c= (char)waitKey(0);
-            continue;
+            if(c == 27 ) break;
+            else continue;
         } else if ( error > lowError && error < upperError){
-            field += field * 0.1 * signFlag;
+            field  += field * 0.1 * signFlag;
             std::cout << "Adjusting field\n";
         } else if ( error > upperError){
             EMulitplier += signFlag;
             adjustStiffness(iLinks, EMulitplier);
             field = CalculateField(iLinks, iJoints, iPosVec);
+            field(1) = 0;
             std::cout << "Adjusting E\n";
         }
 
@@ -361,7 +364,7 @@ int main(int argc, char* argv[]){
 
         imshow("Post", post_img);
         video_out.write(post_img);
-        char c= (char)waitKey(10e2);
+        char c= (char)waitKey(50e2);
         if(c==27) break;
         
     }
