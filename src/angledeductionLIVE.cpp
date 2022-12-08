@@ -1,5 +1,16 @@
 #include <cameraGeneric.hpp>
 
+
+int g_slider = 60; //slider pos value
+int g_slider_max = 200; //slider max value
+const String window_capture_name = "Video Capture";
+
+void on_Link_Length_trackbar(int, void*)
+{
+    printf("%d\n", g_slider);
+}
+
+
 double meanError(std::vector<double> &desired, std::vector<double> &observed);
 
 std::vector<Point> findJoints(Mat post_img_masked, std::vector<std::vector<Point>> &contours);
@@ -43,8 +54,8 @@ std::vector<Point> computeIdealPoints(Point p0, std::vector<double> desiredAngle
     for(int i = 1; i < desiredAngles.size(); i++){
         double angle = 0;
         for( int k = 0; k < i; k++) angle += desiredAngles[k];
-        int xdiff = (link_lenght) * sin(angle * M_PI / 180);
-        int ydiff = (link_lenght) * cos(angle * M_PI / 180);
+        int xdiff = (g_slider) * sin(angle * M_PI / 180);
+        int ydiff = (g_slider) * cos(angle * M_PI / 180);
         Point pn = Point{ (int) (ideal[i-1].x + xdiff), (int) ( ideal[i-1].y + ydiff )}; 
         ideal.push_back(pn);
     }
@@ -61,7 +72,8 @@ inline bool file_exists (const std::string& name) {
 int main(int argc, char* argv[]){
 
 
-    
+    namedWindow(window_capture_name);
+    createTrackbar("Low Thresh", window_capture_name, &g_slider, g_slider_max, on_Link_Length_trackbar);
 
     Mat pre_img, post_img, intr_mask;
     
@@ -266,12 +278,12 @@ std::vector<Point> findJoints(Mat post_img_masked, std::vector<std::vector<Point
     // std::reverse(cntLine.begin(), cntLine.end());
     
     std::vector<Point> Joints;
-    int jointCount = (int) cntLine.size() / link_lenght;
+    int jointCount = (int) cntLine.size() / g_slider;
     
     
     if(jointCount){
         for(int i = 0; i < jointCount; i++){
-            Joints.push_back(cntLine[link_lenght*(i)]);
+            Joints.push_back(cntLine[g_slider*(i)]);
         }
     }
     std::reverse(Joints.begin(), Joints.end());
