@@ -7,7 +7,7 @@ const String window_capture_name = "Video Capture";
 
 void on_Link_Length_trackbar(int, void*)
 {
-    printf("%d\n", g_slider);
+    // printf("%d\n", g_slider);
 }
 
 
@@ -41,7 +41,7 @@ std::vector<double> computeAngles(std::vector<Point> Joints){
         double th = acos(dproduct/nproduct);
         angles.push_back(th * 180 / M_PI);
     }
-
+    std::reverse(angles.begin(), angles.end());
     return angles;
 
 }
@@ -183,22 +183,38 @@ int main(int argc, char* argv[]){
         
 
         jointsCached = JointsObserved;
-        std::vector<double> dAngleSlice = std::vector<double>(desiredAngles.begin(), desiredAngles.begin()+angles.size());         
+        std::vector<double> dAngleSlice = std::vector<double>(desiredAngles.end()-angles.size(), desiredAngles.end());         
         double error = meanError(dAngleSlice, angles);
-        std::cout << "Error: " << error * 1000 << "\n";
         // }
-        for(int i = 1; i < JointsObserved; i++){
-            Rect recta(Joints[i], Joints[i-1]);
-            rectangle(post_img, recta, Scalar(0,0,255), 1);
-            line(post_img, Joints[i], Joints[i-1], Scalar(255,0,0), 1);
-        }
+        // for(int i = 1; i < JointsObserved; i++){
+        //     Rect recta(Joints[i], Joints[i-1]);
+        //     rectangle(post_img, recta, Scalar(0,0,255), 1);
+        //     line(post_img, Joints[i], Joints[i-1], Scalar(255,0,0), 1);
+        // }
         
-        imshow("Post", post_img);
+        imshow(window_capture_name, post_img);
         video_out.write(post_img);
         char c= (char)waitKey(1e2);
         if(c==27) break;
-        std::cout << "Length " << g_slider << "\nCentre-line size:" << contours.size() << "\njoint no: " << JointsObserved << "\n";
-        std::cout << "----------------------------------------------------------------\n";
+        
+        std::cout << "\rObserved Angles ";
+        for(auto j: angles){
+            std::cout << j << " ";
+        }
+        std::cout << "\nDesired angles ";
+        for(auto j: desiredAngles){
+            std::cout << j << " ";
+        }
+        std::cout << "\n";
+        std::cout << "Therefore error " << error << "\n";
+        std::cout << "\n------------------------------------\n";
+
+        // std::cout << "\r" 
+        // << std::setw(9) << std::setfill('0') << "\rError " << std::setprecision(4) << error << 
+        // std::setw(8) << " Length " << g_slider << 
+        // std::setw(8) << " Centre-line size:" << contours.size() <<
+        // std::setw(8) << " joint no: " << Joints.size()  << std::flush;
+        // std::cout << "----------------------------------------------------------------\n";
     }
 
 
