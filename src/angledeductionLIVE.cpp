@@ -181,19 +181,8 @@ int main(int argc, char* argv[]){
         
 
         
-        // if(JointsObserved != jointsCached){
-
 
         jointsCached = JointsObserved;
-        // std::cout << "angles observed:";
-        // for(auto i: angles) std::cout << " " << i << " ";
-        // std::cout << "\n";
-        // th1.push_back(angles[0]);
-        // th2.push_back(angles[1]);
-        // th3.push_back(angles[2]);
-        // th4.push_back(angles[3]);
-        // th5.push_back(angles[4]);
-        
         std::vector<double> dAngleSlice = std::vector<double>(desiredAngles.begin(), desiredAngles.begin()+angles.size());         
         double error = meanError(dAngleSlice, angles);
         std::cout << "Error: " << error * 1000 << "\n";
@@ -208,7 +197,8 @@ int main(int argc, char* argv[]){
         video_out.write(post_img);
         char c= (char)waitKey(1e2);
         if(c==27) break;
-        
+        std::cout << "Length " << g_slider << "\nCentre-line size:" << contours.size() << "\njoint no: " << JointsObserved << "\n";
+        std::cout << "----------------------------------------------------------------\n";
     }
 
 
