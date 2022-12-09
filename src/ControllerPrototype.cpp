@@ -81,8 +81,8 @@ std::vector<Point> computeIdealPoints(Point p0, std::vector<double> desiredAngle
     for(int i = 1; i < desiredAngles_.size(); i++){
         double angle = 0;
         for( int k = 0; k < i; k++) angle += desiredAngles_[k];
-        int xdiff = (link_lenght) * sin(angle * M_PI / 180);
-        int ydiff = (link_lenght) * cos(angle * M_PI / 180);
+        int xdiff = (link_length) * sin(angle * M_PI / 180);
+        int ydiff = (link_length) * cos(angle * M_PI / 180);
         Point pn = Point{ (int) (ideal[i-1].x + xdiff), (int) ( ideal[i-1].y + ydiff )}; 
         ideal.push_back(pn);
     }
@@ -288,7 +288,7 @@ int main(int argc, char* argv[]){
         cvtColor(post_img, post_img_grey, COLOR_BGR2GRAY);
         blur(post_img_grey, post_img_grey, Size(5,5));
         threshold(post_img_grey, post_img_th, threshold_low, threshold_high, THRESH_BINARY_INV);
-        post_img_th.copyTo(post_img_masked);
+        post_img_th.copyTo(post_img_masked, intr_mask);
 
         std::vector<Point> Joints;
         std::vector<std::vector<Point> > contours;
