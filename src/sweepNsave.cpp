@@ -1,14 +1,12 @@
 #include <algorithm>
-#include <opencv2/ximgproc.hpp>
-#include <opencv2/video.hpp>
 #include <fstream>
 #include <chrono>
 #include <unistd.h>
-#include <pylon/PylonIncludes.h>
 #include "HCoilMiddlewareLib/HCoilMiddlewareLib.hpp"
+#include <cameraGeneric.hpp>
 
 #define ONEMILLION 1000000
-#define WAITTIME 2
+#define WAITTIME 5
 using namespace cv;
 
 
@@ -36,9 +34,11 @@ int main(int argc, char * argv[])
     Pylon::CIntegerParameter width     ( camera.GetNodeMap(), "Width");
     Pylon::CIntegerParameter height    ( camera.GetNodeMap(), "Height");
     Pylon::CEnumParameter pixelFormat  ( camera.GetNodeMap(), "PixelFormat");
+    Pylon::CFloatParameter(camera.GetNodeMap(), "ExposureTime").SetValue(20000.0);
     Size frameSize= Size((int)width.GetValue(), (int)height.GetValue());
-    width.TrySetValue(640*3, Pylon::IntegerValueCorrection_Nearest);
-    height.TrySetValue(480*3, Pylon::IntegerValueCorrection_Nearest);
+    int codec = VideoWriter::fourcc('M', 'J', 'P', 'G');
+    width.TrySetValue(PYLON_WIDTH, Pylon::IntegerValueCorrection_Nearest);
+    height.TrySetValue(PYLON_HEIGHT, Pylon::IntegerValueCorrection_Nearest);
     Pylon::CPixelTypeMapper pixelTypeMapper( &pixelFormat);
     Pylon::EPixelType pixelType = pixelTypeMapper.GetPylonPixelTypeFromNodeValue(pixelFormat.GetIntValue());
     camera.StartGrabbing(Pylon::GrabStrategy_LatestImageOnly);
@@ -46,13 +46,16 @@ int main(int argc, char * argv[])
     camera.RetrieveResult(5000, ptrGrabResult, Pylon::TimeoutHandling_ThrowException);
     const uint8_t* preImageBuffer = (uint8_t*) ptrGrabResult->GetBuffer();
     formatConverter.Convert(pylonImage, ptrGrabResult);
+    
+    
+    
     std::string outputFileName, expName;
     expName = argv[1];
     
     /***************************
     CAMERA SETUP HERE, IGNORE
     ****************************/
-    
+    usleep(WAITTIME*ONEMILLION);
     camera.RetrieveResult(5000, ptrGrabResult, Pylon::TimeoutHandling_ThrowException);
     const uint8_t* pImageBuffer = (uint8_t*) ptrGrabResult->GetBuffer();
     formatConverter.Convert(pylonImage, ptrGrabResult);
@@ -62,28 +65,26 @@ int main(int argc, char * argv[])
     
     
     
-    
+    std::cout << "Press enter to begin";
+    std::cin.get();
     /***************************
     WRITE YOUR CODE HERE
     ****************************/
     int counter = 1;
-    int i = -25;
+    int i = -20;
 
     std::cout << "Initialising. setting field to -5\n";
     mid.set3DField(-5, 0, 0);
-    usleep(WAITTIME*ONEMILLION);
+    usleep(5*ONEMILLION);
     std::cout << "Initialising. setting field to -10\n";
     mid.set3DField(-10, 0, 0);
-    usleep(WAITTIME*ONEMILLION);
+    usleep(5*ONEMILLION);
     std::cout << "Initialising. setting field to -15\n";
     mid.set3DField(-15, 0, 0);
-    usleep(WAITTIME*ONEMILLION);
+    usleep(5*ONEMILLION);
     std::cout << "Initialising. setting field to -20\n";
     mid.set3DField(-20, 0, 0);
-    usleep(WAITTIME*ONEMILLION);
-    std::cout << "Initialising. setting field to -25\n";
-    mid.set3DField(-25, 0, 0);
-    usleep(WAITTIME*ONEMILLION);
+    usleep(5*ONEMILLION);
 
     std::cout << "Initialisation complete. Press Enter to begin.";
     std::cin.get();
@@ -93,7 +94,7 @@ int main(int argc, char * argv[])
         "field_" + std::to_string(i) + ".png";
         path = outputFileName.c_str();
         
-        if(i > 25) {
+        if(i > 20) {
             break;
             std::cout << "Breaking the loop\n";
         };
