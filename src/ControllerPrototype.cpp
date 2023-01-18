@@ -288,7 +288,7 @@ int main(int argc, char* argv[]){
         cvtColor(post_img, post_img_grey, COLOR_BGR2GRAY);
         blur(post_img_grey, post_img_grey, Size(5,5));
         threshold(post_img_grey, post_img_th, threshold_low, threshold_high, THRESH_BINARY_INV);
-        post_img_th.copyTo(post_img_masked, intr_mask);
+        post_img_th.copyTo(post_img_masked);
 
         std::vector<Point> Joints;
         std::vector<std::vector<Point> > contours;

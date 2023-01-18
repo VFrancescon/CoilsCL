@@ -11,7 +11,7 @@
 using namespace cv;
 
 
-int threshold_low = 110;
+int threshold_low = 131;
 int threshold_high = 255;
 int link_length = 55;
 
