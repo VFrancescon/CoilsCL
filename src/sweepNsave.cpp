@@ -90,7 +90,6 @@ int main(int argc, char * argv[])
     // DXKDP_PSU Psu3("/dev/ttyUSB3", 0.1, 0.01);
     DXKDP_PSU Psu4("/dev/ttyUSB4", 0.01, 0.01);
     DXKDP_PSU Psu5("/dev/ttyUSB5", 0.01, 0.01);
-    // DXKDP_PSU Psu1("/dev/ttyUSB1", 0.1, 0.01);
     
     std::cout << "Initialisation complete. Press Enter to begin.";
     std::cin.get();
@@ -184,7 +183,7 @@ int main(int argc, char * argv[])
         Psu2.WriteCurrent( (float) abs(k));
         Psu4.WriteCurrent( (float) abs(k));
         Psu5.WriteCurrent( (float) abs(k));
-        usleep(4e6);
+        usleep(2e6);
     }
     Psu0.PoCtrl(0x00);
     Psu1.PoCtrl(0x00);
