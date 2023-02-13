@@ -18,7 +18,7 @@ int main(int argc, char* argv[]){
     Pylon::CIntegerParameter height    ( camera.GetNodeMap(), "Height");
     Pylon::CEnumParameter pixelFormat  ( camera.GetNodeMap(), "PixelFormat");
     
-    Pylon::CFloatParameter(camera.GetNodeMap(), "ExposureTime").SetValue(20000.0);
+    Pylon::CFloatParameter(camera.GetNodeMap(), "ExposureTime").SetValue(exposureTime);
     
     
     
@@ -39,9 +39,9 @@ int main(int argc, char* argv[]){
     //             Size(img.rows / 2, img.cols * 3 / 8));
 
     //resizing the image for faster processing
-    int rows = img.rows * 3 / 8;
-    int cols = img.cols * 3 / 8; 
-    resize(img, img, Size(rows, cols), INTER_LINEAR);
+    int rows = img.rows / 2;
+    int cols = img.cols / 2; 
+    resize(img, img, Size(cols,rows), INTER_LINEAR);
 
     while(camera.IsGrabbing()){
         camera.RetrieveResult(5000, ptrGrabResult, Pylon::TimeoutHandling_ThrowException);
@@ -56,7 +56,7 @@ int main(int argc, char* argv[]){
         }
         
         //make image smaller 
-        resize(img, img, Size(rows, cols), INTER_LINEAR);
+        resize(img, img, Size(cols,rows), INTER_LINEAR);
         // flip(img, img, 1);
         // line( img, Point(0, cols/3), Point(rows, cols/3), Scalar(0,0,0) ); //horizontal lines
         // line( img, Point(0, cols*2/3), Point(rows, cols/3*2), Scalar(0,0,0) );
@@ -65,8 +65,8 @@ int main(int argc, char* argv[]){
         // line( img, Point(rows*2/3), Point(rows*2/3, cols), Scalar(0,0,0) );
 
         //crosshair
-        line(img, Point(rows/2-20, cols/2), Point(rows/2+20, cols/2), Scalar(0,0,0));
-        line(img, Point(rows/2, cols/2-20), Point(rows/2, cols/2+20), Scalar(0,0,0));
+        line(img, Point(cols/2-20, rows/2), Point(cols/2+20, rows/2), Scalar(0,0,0));
+        line(img, Point(cols/2, rows/2-20), Point(cols/2, rows/2+20), Scalar(0,0,0));
 
         
         Point p = Point(30,30);

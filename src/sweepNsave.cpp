@@ -19,7 +19,7 @@ int main(int argc, char * argv[])
         time(&curr_time);
         curr_tm = localtime(&curr_time);
         char date_string[100];
-        strftime(date_string, 50, "%d_%m_%Y", curr_tm);
+        strftime(date_string, 50, "%d_%m_%y_", curr_tm);
         std::string date(date_string);
             
         /***************************
@@ -42,7 +42,7 @@ int main(int argc, char * argv[])
         Pylon::CIntegerParameter width     ( camera.GetNodeMap(), "Width");
         Pylon::CIntegerParameter height    ( camera.GetNodeMap(), "Height");
         Pylon::CEnumParameter pixelFormat  ( camera.GetNodeMap(), "PixelFormat");
-        Pylon::CFloatParameter(camera.GetNodeMap(), "ExposureTime").SetValue(20000.0);
+        Pylon::CFloatParameter(camera.GetNodeMap(), "ExposureTime").SetValue(exposureTime);
         Size frameSize= Size((int)width.GetValue(), (int)height.GetValue());
         int codec = VideoWriter::fourcc('M', 'J', 'P', 'G');
         width.TrySetValue(PYLON_WIDTH, Pylon::IntegerValueCorrection_Nearest);
@@ -51,9 +51,7 @@ int main(int argc, char * argv[])
         Pylon::EPixelType pixelType = pixelTypeMapper.GetPylonPixelTypeFromNodeValue(pixelFormat.GetIntValue());
         camera.StartGrabbing(Pylon::GrabStrategy_LatestImageOnly);
         Pylon::CGrabResultPtr ptrGrabResult;
-        camera.RetrieveResult(5000, ptrGrabResult, Pylon::TimeoutHandling_ThrowException);
-        const uint8_t* preImageBuffer = (uint8_t*) ptrGrabResult->GetBuffer();
-        formatConverter.Convert(pylonImage, ptrGrabResult);
+        
         
         
         
@@ -65,19 +63,15 @@ int main(int argc, char * argv[])
         /***************************
         CAMERA SETUP HERE, IGNORE
         ****************************/
+        std::cout << "Press enter to begin PSU Operation.";
+        std::cin.get();
+        usleep(2e6);
         camera.RetrieveResult(5000, ptrGrabResult, Pylon::TimeoutHandling_ThrowException);
-        const uint8_t* pImageBuffer = (uint8_t*) ptrGrabResult->GetBuffer();
+        const uint8_t* preImageBuffer = (uint8_t*) ptrGrabResult->GetBuffer();
         formatConverter.Convert(pylonImage, ptrGrabResult);
         outputFileName = "FMP_TESTS/" + date + expName + "refPicture.png";
         Pylon::String_t path = outputFileName.c_str();
         pylonImage.Save(png, path);
-        
-
-        
-        
-        
-        std::cout << "Press enter to begin PSU Operation.";
-        std::cin.get();
         /***************************
         WRITE YOUR CODE HERE
         ****************************/
@@ -90,8 +84,8 @@ int main(int argc, char * argv[])
 
         while(camera.IsGrabbing()){
         while(true){
-            outputFileName = "AlistairResults/" + expName + "step_" +  std::to_string(counter)  + 
-            "field_" + std::to_string(i) + ".png";
+            outputFileName = "FMP_TESTS/" + date + expName + "_" + std::to_string(counter) 
+            + "_" + std::to_string((int) i) + ".png";
             path = outputFileName.c_str();
             
             if(i > 20.f) {
@@ -102,9 +96,9 @@ int main(int argc, char * argv[])
             float field =  i;
             std::cout << "\n\n--------------------NEW ITERATION--------------------\n\n";
             std::cout << "Setting field to " << field << "\n";
-            mid.set3DField(field, 0, 0);
+            mid.set3DField(field, 0, -abs(field)/4);
             i = i + 5.f;
-            // counter++;
+            counter++;
             std::cout << "Field set. going to sleep for " << WAITTIME << " seconds\n";
             
             // Sleep for some time
@@ -112,12 +106,12 @@ int main(int argc, char * argv[])
 
             // Take a snapshot from the camera
             
-            // camera.RetrieveResult(5000, ptrGrabResult, Pylon::TimeoutHandling_ThrowException);
-            // const uint8_t* pImageBuffer = (uint8_t*) ptrGrabResult->GetBuffer();
-            // formatConverter.Convert(pylonImage, ptrGrabResult);
-            // pylonImage.Save(png, path);
+            camera.RetrieveResult(5000, ptrGrabResult, Pylon::TimeoutHandling_ThrowException);
+            const uint8_t* pImageBuffer = (uint8_t*) ptrGrabResult->GetBuffer();
+            formatConverter.Convert(pylonImage, ptrGrabResult);
+            pylonImage.Save(png, path);
             
-            // std::cout << "Picture saved. Moving onto next iteration\n";
+            std::cout << "Picture saved. Moving onto next iteration\n";
             
         }
 
