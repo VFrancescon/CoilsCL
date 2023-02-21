@@ -68,7 +68,7 @@ std::vector<double> computeAngles(std::vector<Point> Joints){
         double th = acos(dproduct/nproduct);
         angles.push_back(th * 180 / M_PI);
     }
-
+    std::reverse(angles.begin(), angles.end());
     return angles;
 
 }
@@ -81,8 +81,8 @@ std::vector<Point> computeIdealPoints(Point p0, std::vector<double> desiredAngle
     for(int i = 1; i < desiredAngles_.size(); i++){
         double angle = 0;
         for( int k = 0; k < i; k++) angle += desiredAngles_[k];
-        int xdiff = (link_lenght) * sin(angle * M_PI / 180);
-        int ydiff = (link_lenght) * cos(angle * M_PI / 180);
+        int xdiff = (link_length) * sin(angle * M_PI / 180);
+        int ydiff = (link_length) * cos(angle * M_PI / 180);
         Point pn = Point{ (int) (ideal[i-1].x + xdiff), (int) ( ideal[i-1].y + ydiff )}; 
         ideal.push_back(pn);
     }
@@ -127,14 +127,23 @@ std::vector<Point> findJoints(Mat post_img_masked, std::vector<std::vector<Point
     // std::reverse(cntLine.begin(), cntLine.end());
     
     std::vector<Point> Joints;
-    int jointCount = (int) cntLine.size() / link_lenght;
-    
-    
-    if(jointCount){
-        for(int i = 0; i < jointCount; i++){
-            Joints.push_back(cntLine[link_lenght*(i)]);
-        }
+    // int jointCount = (int) cntLine.size() / link_lenght;
+    int jointNumber = 6;
+    int link_l = cntLine.size() / jointNumber;
+
+    for(int i = 0; i < jointNumber; i++){
+        Joints.push_back(cntLine[link_l*i]);
     }
+
+    // if(jointCount){
+    //     for(int i = 0; i < jointCount; i++){
+    //         Joints.push_back(cntLine[link_lenght*(i)]);
+    //     }
+    // }
+
+    
+    
+
     std::reverse(Joints.begin(), Joints.end());
 
     return Joints;
@@ -295,6 +304,7 @@ int main(int argc, char* argv[]){
         std::vector<double> desiredAngles_ = std::vector<double>(DesiredAngles.begin(), DesiredAngles.end()-1);
         std::vector<Point> idealPoints;
         if(p0 == Point{-2000,2000}) p0 = Joints[0];
+        // if( !isnan(Joints[0].x) && !isnan(Joints[0].y) ) p0 = Joints[0];
 
         idealPoints = computeIdealPoints(p0, desiredAngles_);
         angles = computeAngles(Joints);
@@ -364,7 +374,7 @@ int main(int argc, char* argv[]){
 
         imshow("Post", post_img);
         video_out.write(post_img);
-        char c= (char)waitKey(50e2);
+        char c= (char)waitKey(500);
         if(c==27) break;
         
     }
