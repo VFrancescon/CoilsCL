@@ -4,10 +4,23 @@
 #include <opencv2/video.hpp>
 #include <fstream>
 #include <chrono>
+#include <stdlib.h>
 #include <unistd.h>
 using namespace cv;
 
-int link_lenght_ = 65;
+int link_lenght_ = 50;
+
+template<typename T>
+double avgVect(std::vector<T> inputVec){
+    double avg, sum = 0;
+
+    for(auto i : inputVec){
+        sum += i;
+    }
+    avg = sum / inputVec.size();
+    return avg;
+}
+
 
 inline int meanError(std::vector<double> &desired, std::vector<double> &observed)
 {
@@ -29,6 +42,22 @@ inline int meanError(std::vector<double> &desired, std::vector<double> &observed
         return 15;
     }
     return (int)(d_error );
+}
+
+inline int pieceWiseError(std::vector<double> desired, std::vector<double> observed){
+    double avg;
+    int error;
+    desired.pop_back();
+    std::vector<double> diff(desired.size());
+    if(desired.size() == observed.size()){
+        for(int i = 0; i < desired.size(); i++){
+            diff[i] = desired[i] - observed[i];
+        }
+        avg = avgVect(diff);
+        return (int) avg;
+    } else {
+        std::cout << "No matching sizes\n";
+        return 0;}
 }
 
 std::vector<Point> computeIdealPoints(Point p0, std::vector<double> desiredAngles_){
@@ -73,7 +102,7 @@ std::vector<Point> findJoints(Mat post_img_masked, std::vector<std::vector<Point
     std::vector<Point> cntLine;
     findNonZero(skeleton, cntLine);
     std::sort(cntLine.begin(), cntLine.end(), yWiseSort);
-    std::sort(cntLine.begin(), cntLine.end(), xWiseSort);
+    // std::sort(cntLine.begin(), cntLine.end(), xWiseSort);
     // std::reverse(cntLine.begin(), cntLine.end());
 
     std::vector<Point> Joints;
@@ -120,22 +149,22 @@ int main(int argc, char* argv[]){
     std::string img_path = "string";
     std::vector<double> DesiredAngles(6), ObservedAngles;
     //mag tray
-    DesiredAngles[0] = -15;
-    DesiredAngles[1] = 15;
-    DesiredAngles[2] = -90;
-    DesiredAngles[3] = 90;
-    DesiredAngles[4] = -90;
+    DesiredAngles[0] = 15;
+    DesiredAngles[1] = -15;
+    DesiredAngles[2] = 90;
+    DesiredAngles[3] = -90;
+    DesiredAngles[4] = 90;
     DesiredAngles[5] = 0;
 
     //10/20/30/45/30
     std::vector<double> RealistcAngles(6);
     //mag tray
-    RealistcAngles[0] = -10;
-    RealistcAngles[1] = -20;
-    RealistcAngles[2] = -30;
-    RealistcAngles[3] = -45;
-    RealistcAngles[4] = -30;
-    RealistcAngles[5] = -0;
+    RealistcAngles[0] = 10;
+    RealistcAngles[1] = 20;
+    RealistcAngles[2] = 30;
+    RealistcAngles[3] = 45;
+    RealistcAngles[4] = 30;
+    RealistcAngles[5] = 0;
     
     if(argc >= 2) {
         img_path = argv[1];
@@ -148,72 +177,80 @@ int main(int argc, char* argv[]){
         }
 
 
+    std::vector<std::string> FileNames;
+    cv::String folderPath = img_path + "*.png";
+    glob(folderPath, FileNames, false);
 
-    //image specific settings here.
-
-    Mat img  = imread(img_path, IMREAD_COLOR);
-    int rows,cols;
-    rows = img.rows / 8 * 3;
-    cols = img.cols / 8 * 3;
-
+    for( auto k1: FileNames){
+        Mat img  = imread(k1, IMREAD_COLOR);
+        int rows,cols;
+        rows = img.rows / 8 * 3;
+        cols = img.cols / 8 * 3;
 
 
-    resize(img, img, Size(cols,rows), INTER_LINEAR);
-    Mat img_copy, threshold_img, img_post, cnts_bin, skeleton;
 
-    //create a greyscale copy of the image
-    cvtColor(img, img_copy, COLOR_BGR2GRAY);
-    
-    //apply blur and threshold so that only the tentacle is visible
-    blur(img_copy, img_copy, Size(5,5));
-    threshold(img_copy, threshold_img, th_low, 255, THRESH_BINARY_INV); 
+        resize(img, img, Size(cols,rows), INTER_LINEAR);
+        Mat img_copy, threshold_img, img_post, cnts_bin, skeleton;
 
-    //set up vectors for findContours to output to
-    std::vector<std::vector<Point> > contours;
-    std::vector<Vec4i> hierarchy;
-    std::vector<Point> Joints;
-    
-    Joints = findJoints(threshold_img, contours);
-    int cntr = 0;
-    for(auto i: Joints){
-        circle(img, i, 4, Scalar(255,0,0), FILLED);
-        // putText(img, std::to_string(cntr), i, FONT_HERSHEY_SIMPLEX, 2, Scalar(0,0,0));
-        cntr++;
+        //create a greyscale copy of the image
+        cvtColor(img, img_copy, COLOR_BGR2GRAY);
+        
+        //apply blur and threshold so that only the tentacle is visible
+        blur(img_copy, img_copy, Size(5,5));
+        threshold(img_copy, threshold_img, th_low, 255, THRESH_BINARY_INV); 
+
+        //set up vectors for findContours to output to
+        std::vector<std::vector<Point> > contours;
+        std::vector<Vec4i> hierarchy;
+        std::vector<Point> Joints;
+        
+        Joints = findJoints(threshold_img, contours);
+        int cntr = 0;
+        for(auto i: Joints){
+            circle(img, i, 4, Scalar(255,0,0), FILLED);
+            // putText(img, std::to_string(cntr), i, FONT_HERSHEY_SIMPLEX, 2, Scalar(0,0,0));
+            cntr++;
+        }
+        // circle(img, Joints[Joints.size()-1], 4, Scalar(255,255,0), FILLED);
+
+        ObservedAngles = computeAngles(Joints);
+        // std::cout << "Observed Angles\n";
+        // for(auto i: ObservedAngles){
+        //     std::cout << i << "\n";
+        // }
+
+        std::vector<Point> idealPoints = computeIdealPoints(Joints[0], DesiredAngles);
+        for (int i = 0; i < idealPoints.size() - 1; i++)
+        {
+            line(img, idealPoints[i], idealPoints[i + 1], Scalar(0, 0, 255));
+            circle(img, idealPoints[i], 2, Scalar(255, 0, 0));
+            // idealPoints[i] *= -1;
+        }
+
+        std::vector<Point> RealistcPoints = computeIdealPoints(Joints[0], RealistcAngles);
+        for (int i = 0; i < RealistcPoints.size() - 1; i++)
+        {
+            line(img, RealistcPoints[i], RealistcPoints[i + 1], Scalar(255, 0, 255));
+            circle(img, RealistcPoints[i], 2, Scalar(255, 0, 255));
+            // RealistcPoints[i] *= -1;
+
+        }   
+
+        // // int idealError = meanError(DesiredAngles, ObservedAngles);
+        // int realisticError = meanError(RealistcAngles, ObservedAngles);
+
+
+        int idealError = pieceWiseError(DesiredAngles, ObservedAngles);
+        int realisticError = pieceWiseError(RealistcAngles, ObservedAngles);
+
+        std::cout << "\n--------------------NEW ITERATION--------------------\n";
+        std::cout << "Ideal error: " << idealError << "\n";
+        std::cout << "Realistic error: " << realisticError << "\n";
+        //image specific section
+
+        imshow("Joints", img);
+        char c= (char) waitKey(0);
     }
-    // circle(img, Joints[Joints.size()-1], 4, Scalar(255,255,0), FILLED);
-
-    ObservedAngles = computeAngles(Joints);
-    std::cout << "Observed Angles\n";
-    for(auto i: ObservedAngles){
-        std::cout << i << "\n";
-    }
-
-    std::vector<Point> idealPoints = computeIdealPoints(Joints[0], DesiredAngles);
-    for (int i = 0; i < idealPoints.size() - 1; i++)
-    {
-        line(img, idealPoints[i], idealPoints[i + 1], Scalar(0, 0, 255));
-        circle(img, idealPoints[i], 2, Scalar(255, 0, 0));
-        idealPoints[i] *= -1;
-    }
-
-    std::vector<Point> RealistcPoints = computeIdealPoints(Joints[0], RealistcAngles);
-    for (int i = 0; i < RealistcPoints.size() - 1; i++)
-    {
-        line(img, RealistcPoints[i], RealistcPoints[i + 1], Scalar(255, 0, 255));
-        circle(img, RealistcPoints[i], 2, Scalar(255, 0, 255));
-        RealistcPoints[i] *= -1;
-
-    }   
-
-    int idealError = meanError(DesiredAngles, ObservedAngles);
-    int realisticError = meanError(RealistcAngles, ObservedAngles);
-
-    std::cout << "Ideal error: " << idealError << "\n";
-    std::cout << "Realistic error: " << realisticError << "\n";
-    //image specific section
-
-    imshow("Joints", img);
-    char c= (char) waitKey(0);
 
     return 0;
 }
