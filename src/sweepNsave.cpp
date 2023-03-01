@@ -65,18 +65,18 @@ int main(int argc, char * argv[])
         ****************************/
         std::cout << "Press enter to begin PSU Operation.";
         std::cin.get();
-        usleep(2e6);
+        usleep(5e6);
         camera.RetrieveResult(5000, ptrGrabResult, Pylon::TimeoutHandling_ThrowException);
         const uint8_t* preImageBuffer = (uint8_t*) ptrGrabResult->GetBuffer();
         formatConverter.Convert(pylonImage, ptrGrabResult);
-        outputFileName = "FMP_TESTS/" + date + expName + "refPicture.png";
+        outputFileName = "JoshDavyResults/" + date + expName + "refPicture.png";
         Pylon::String_t path = outputFileName.c_str();
         pylonImage.Save(png, path);
         /***************************
         WRITE YOUR CODE HERE
         ****************************/
         int counter = 1;
-        float i = -20.f;
+        float i = -15.f;
         std::cout << "Initialising. setting field to -20\n";
         mid.set3DField(i, 0, 0);
         std::cout << "Initialisation complete. Press Enter to begin.";
@@ -84,11 +84,11 @@ int main(int argc, char * argv[])
 
         while(camera.IsGrabbing()){
         while(true){
-            outputFileName = "FMP_TESTS/" + date + expName + "_" + std::to_string(counter) 
+            outputFileName = "JoshDavyResults/" + date + expName + "_" + std::to_string(counter) 
             + "_" + std::to_string((int) i) + ".png";
             path = outputFileName.c_str();
             
-            if(i > 20.f) {
+            if(i > 15.f) {
                 break;
                 std::cout << "Breaking the loop\n";
             };
@@ -96,13 +96,13 @@ int main(int argc, char * argv[])
             float field =  i;
             std::cout << "\n\n--------------------NEW ITERATION--------------------\n\n";
             std::cout << "Setting field to " << field << "\n";
-            mid.set3DField(field, 0, -abs(field)/4);
+            mid.set3DField(field, 0, 0);
             i = i + 5.f;
             counter++;
             std::cout << "Field set. going to sleep for " << WAITTIME << " seconds\n";
             
             // Sleep for some time
-            usleep(5e6);
+            usleep(20e6);
 
             // Take a snapshot from the camera
             
