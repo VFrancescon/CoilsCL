@@ -76,7 +76,7 @@ int main(int argc, char * argv[])
         WRITE YOUR CODE HERE
         ****************************/
         int counter = 1;
-        float i = -15.f;
+        float i = 0.f;
         std::cout << "Initialising. setting field to -20\n";
         mid.set3DField(i, 0, 0);
         std::cout << "Initialisation complete. Press Enter to begin.";
@@ -88,7 +88,7 @@ int main(int argc, char * argv[])
             + "_" + std::to_string((int) i) + ".png";
             path = outputFileName.c_str();
             
-            if(i > 15.f) {
+            if(i > 20.f) {
                 break;
                 std::cout << "Breaking the loop\n";
             };
