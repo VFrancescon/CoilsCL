@@ -158,8 +158,8 @@ int main(int argc, char* argv[]){
 
     //timesteps are equal to joint no
     int timesteps = jointEff;  
-    // Vector3d reconciliationAngles = Vector3d{-90, 0, 90};
-    double EMulitplier = 5;
+    Vector3d reconciliationAngles = Vector3d{180, 0, 0};
+    double EMulitplier = 1;
     /* * * * * * * * * * * * * * * * * * * * * * * * *
      * PRECOMPUTATION FOR EACH TIMESTEP BEGINS HERE  *
      *                                               *
@@ -169,10 +169,10 @@ int main(int argc, char* argv[]){
 
     std::vector<int> DesiredAngles(jointNo);
     DesiredAngles[0] = 10;
-    DesiredAngles[1] = 15;
-    DesiredAngles[2] = 15;
-    DesiredAngles[3] = 20;
-    DesiredAngles[4] = 20;
+    DesiredAngles[1] = 20;
+    DesiredAngles[2] = 30;
+    DesiredAngles[3] = 10;
+    DesiredAngles[4] = 45;
     DesiredAngles[jointEff] = 0;
 
     std::vector<Vector3d> Magnetisations(jointNo);
@@ -209,177 +209,177 @@ int main(int argc, char* argv[]){
     
 
 
-    /**
-     * MIDDLEWARE SECTION BELOW
-     * 
-     */
-    MiddlewareLayer mid(true);
-    mid.set3DField(field);
+    // /**
+    //  * MIDDLEWARE SECTION BELOW
+    //  * 
+    //  */
+    // MiddlewareLayer mid(true);
+    // mid.set3DField(field);
 
-    Mat pre_img, post_img, intr_mask;
-    Pylon::PylonInitialize();
-    Pylon::CImageFormatConverter formatConverter;
-    formatConverter.OutputPixelFormat = Pylon::PixelType_BGR8packed;
-    Pylon::CPylonImage pylonImage;
-    Pylon::CInstantCamera camera(Pylon::CTlFactory::GetInstance().CreateFirstDevice() );
-    camera.Open();
-    Pylon::CIntegerParameter width     ( camera.GetNodeMap(), "Width");
-    Pylon::CIntegerParameter height    ( camera.GetNodeMap(), "Height");
-    Pylon::CEnumParameter pixelFormat  ( camera.GetNodeMap(), "PixelFormat");
-    Pylon::CFloatParameter(camera.GetNodeMap(), "ExposureTime").SetValue(20000.0);
-    Size frameSize= Size((int)width.GetValue(), (int)height.GetValue());
-    int codec = VideoWriter::fourcc('M', 'J', 'P', 'G');
-    width.TrySetValue(PYLON_WIDTH, Pylon::IntegerValueCorrection_Nearest);
-    height.TrySetValue(PYLON_HEIGHT, Pylon::IntegerValueCorrection_Nearest);
-    Pylon::CPixelTypeMapper pixelTypeMapper( &pixelFormat);
-    Pylon::EPixelType pixelType = pixelTypeMapper.GetPylonPixelTypeFromNodeValue(pixelFormat.GetIntValue());
+    // Mat pre_img, post_img, intr_mask;
+    // Pylon::PylonInitialize();
+    // Pylon::CImageFormatConverter formatConverter;
+    // formatConverter.OutputPixelFormat = Pylon::PixelType_BGR8packed;
+    // Pylon::CPylonImage pylonImage;
+    // Pylon::CInstantCamera camera(Pylon::CTlFactory::GetInstance().CreateFirstDevice() );
+    // camera.Open();
+    // Pylon::CIntegerParameter width     ( camera.GetNodeMap(), "Width");
+    // Pylon::CIntegerParameter height    ( camera.GetNodeMap(), "Height");
+    // Pylon::CEnumParameter pixelFormat  ( camera.GetNodeMap(), "PixelFormat");
+    // Pylon::CFloatParameter(camera.GetNodeMap(), "ExposureTime").SetValue(20000.0);
+    // Size frameSize= Size((int)width.GetValue(), (int)height.GetValue());
+    // int codec = VideoWriter::fourcc('M', 'J', 'P', 'G');
+    // width.TrySetValue(PYLON_WIDTH, Pylon::IntegerValueCorrection_Nearest);
+    // height.TrySetValue(PYLON_HEIGHT, Pylon::IntegerValueCorrection_Nearest);
+    // Pylon::CPixelTypeMapper pixelTypeMapper( &pixelFormat);
+    // Pylon::EPixelType pixelType = pixelTypeMapper.GetPylonPixelTypeFromNodeValue(pixelFormat.GetIntValue());
     
     
-    camera.StartGrabbing(Pylon::GrabStrategy_LatestImageOnly);
-    Pylon::CGrabResultPtr ptrGrabResult;
-    camera.RetrieveResult(5000, ptrGrabResult, Pylon::TimeoutHandling_ThrowException);
-    const uint8_t* preImageBuffer = (uint8_t*) ptrGrabResult->GetBuffer();
-    formatConverter.Convert(pylonImage, ptrGrabResult);
-    pre_img = cv::Mat(ptrGrabResult->GetHeight(), ptrGrabResult->GetWidth(), CV_8UC3, (uint8_t *) pylonImage.GetBuffer());
+    // camera.StartGrabbing(Pylon::GrabStrategy_LatestImageOnly);
+    // Pylon::CGrabResultPtr ptrGrabResult;
+    // camera.RetrieveResult(5000, ptrGrabResult, Pylon::TimeoutHandling_ThrowException);
+    // const uint8_t* preImageBuffer = (uint8_t*) ptrGrabResult->GetBuffer();
+    // formatConverter.Convert(pylonImage, ptrGrabResult);
+    // pre_img = cv::Mat(ptrGrabResult->GetHeight(), ptrGrabResult->GetWidth(), CV_8UC3, (uint8_t *) pylonImage.GetBuffer());
     
-    int rrows = pre_img.rows  * 3 / 8;
-    int rcols = pre_img.cols * 3 / 8; 
+    // int rrows = pre_img.rows  * 3 / 8;
+    // int rcols = pre_img.cols * 3 / 8; 
     
-    /**
-     * VIDEO OUTPUT WRITE
-     * 
-     */
-    std::string outputPath = "C_PROTOTYPE.avi";
+    // /**
+    //  * VIDEO OUTPUT WRITE
+    //  * 
+    //  */
+    // std::string outputPath = "C_PROTOTYPE.avi";
 
-    while(file_exists(outputPath)){
-        outputPath += "_1";
-    }
-
-
-    VideoWriter video_out(outputPath, VideoWriter::fourcc('M', 'J', 'P', 'G'), 10, 
-                Size(rrows, rcols));
+    // while(file_exists(outputPath)){
+    //     outputPath += "_1";
+    // }
 
 
+    // VideoWriter video_out(outputPath, VideoWriter::fourcc('M', 'J', 'P', 'G'), 10, 
+    //             Size(rrows, rcols));
 
-    // resize(pre_img, pre_img, Size(rrows, rcols), INTER_LINEAR);
-    // Mat pre_img1 = Mat::zeros(Size(rrows, rcols), CV_8UC3);
-    // intr_mask = IntroducerMask(pre_img1);
-    intr_mask = IntroducerMask(pre_img);
-    int jointsCached = 0;
-    Point p0 = Point{-2000,2000};
-    double bx_add = 0, bz_add = 0;
-    std::cout << "Ready to go. Press enter";
-    std::cin.get();
 
-    while(camera.IsGrabbing()){
-        camera.RetrieveResult(5000, ptrGrabResult, Pylon::TimeoutHandling_ThrowException);
-        const uint8_t* pImageBuffer = (uint8_t*) ptrGrabResult->GetBuffer();
-        formatConverter.Convert(pylonImage, ptrGrabResult);
-        post_img = cv::Mat(ptrGrabResult->GetHeight(), ptrGrabResult->GetWidth(), CV_8UC3, (uint8_t *) pylonImage.GetBuffer());
 
-        if(post_img.empty())
-        {
-            break;
-        }
-        resize(post_img, post_img, Size(rrows, rcols), INTER_LINEAR);
-        Mat post_img_grey, post_img_th;
-        Mat post_img_masked = Mat::zeros(Size(rrows, rcols), CV_8UC1);
+    // // resize(pre_img, pre_img, Size(rrows, rcols), INTER_LINEAR);
+    // // Mat pre_img1 = Mat::zeros(Size(rrows, rcols), CV_8UC3);
+    // // intr_mask = IntroducerMask(pre_img1);
+    // intr_mask = IntroducerMask(pre_img);
+    // int jointsCached = 0;
+    // Point p0 = Point{-2000,2000};
+    // double bx_add = 0, bz_add = 0;
+    // std::cout << "Ready to go. Press enter";
+    // std::cin.get();
 
-        cvtColor(post_img, post_img_grey, COLOR_BGR2GRAY);
-        blur(post_img_grey, post_img_grey, Size(5,5));
-        threshold(post_img_grey, post_img_th, threshold_low, threshold_high, THRESH_BINARY_INV);
-        post_img_th.copyTo(post_img_masked);
+    // while(camera.IsGrabbing()){
+    //     camera.RetrieveResult(5000, ptrGrabResult, Pylon::TimeoutHandling_ThrowException);
+    //     const uint8_t* pImageBuffer = (uint8_t*) ptrGrabResult->GetBuffer();
+    //     formatConverter.Convert(pylonImage, ptrGrabResult);
+    //     post_img = cv::Mat(ptrGrabResult->GetHeight(), ptrGrabResult->GetWidth(), CV_8UC3, (uint8_t *) pylonImage.GetBuffer());
 
-        std::vector<Point> Joints;
-        std::vector<std::vector<Point> > contours;
+    //     if(post_img.empty())
+    //     {
+    //         break;
+    //     }
+    //     resize(post_img, post_img, Size(rrows, rcols), INTER_LINEAR);
+    //     Mat post_img_grey, post_img_th;
+    //     Mat post_img_masked = Mat::zeros(Size(rrows, rcols), CV_8UC1);
 
-        Joints = findJoints(post_img_masked, contours);
-        int JointsObserved = Joints.size();
-        for(auto i: Joints){
-            circle(post_img, i, 4, Scalar(255,0,0), FILLED);        
-        }
-        drawContours(post_img, contours, -1, Scalar(255,255,0));
+    //     cvtColor(post_img, post_img_grey, COLOR_BGR2GRAY);
+    //     blur(post_img_grey, post_img_grey, Size(5,5));
+    //     threshold(post_img_grey, post_img_th, threshold_low, threshold_high, THRESH_BINARY_INV);
+    //     post_img_th.copyTo(post_img_masked);
+
+    //     std::vector<Point> Joints;
+    //     std::vector<std::vector<Point> > contours;
+
+    //     Joints = findJoints(post_img_masked, contours);
+    //     int JointsObserved = Joints.size();
+    //     for(auto i: Joints){
+    //         circle(post_img, i, 4, Scalar(255,0,0), FILLED);        
+    //     }
+    //     drawContours(post_img, contours, -1, Scalar(255,255,0));
         
-        std::vector<double> angles; 
-        std::vector<double> desiredAngles_ = std::vector<double>(DesiredAngles.begin(), DesiredAngles.end()-1);
-        std::vector<Point> idealPoints;
-        if(p0 == Point{-2000,2000}) p0 = Joints[0];
-        // if( !isnan(Joints[0].x) && !isnan(Joints[0].y) ) p0 = Joints[0];
+    //     std::vector<double> angles; 
+    //     std::vector<double> desiredAngles_ = std::vector<double>(DesiredAngles.begin(), DesiredAngles.end()-1);
+    //     std::vector<Point> idealPoints;
+    //     if(p0 == Point{-2000,2000}) p0 = Joints[0];
+    //     // if( !isnan(Joints[0].x) && !isnan(Joints[0].y) ) p0 = Joints[0];
 
-        idealPoints = computeIdealPoints(p0, desiredAngles_);
-        angles = computeAngles(Joints);
-        for(int i = 0; i < idealPoints.size()-1; i++){
-            line(post_img, idealPoints[i], idealPoints[i+1], Scalar(0,0,255));
-            circle(post_img, idealPoints[i], 2, Scalar(255,0,0));
-        }
+    //     idealPoints = computeIdealPoints(p0, desiredAngles_);
+    //     angles = computeAngles(Joints);
+    //     for(int i = 0; i < idealPoints.size()-1; i++){
+    //         line(post_img, idealPoints[i], idealPoints[i+1], Scalar(0,0,255));
+    //         circle(post_img, idealPoints[i], 2, Scalar(255,0,0));
+    //     }
 
 
 
-        // if(JointsObserved != jointsCached){
+    //     // if(JointsObserved != jointsCached){
 
-        jointsCached = JointsObserved;
-        std::vector<double> dAngleSlice = std::vector<double>(desiredAngles_.end()-angles.size(), desiredAngles_.end());         
-        // std::vector<double> dAngleSlice = desiredAngles_;
-        int error = meanError(dAngleSlice, angles);
-        std::cout << "\n\n---------------------------------------------------------\n\n";
+    //     jointsCached = JointsObserved;
+    //     std::vector<double> dAngleSlice = std::vector<double>(desiredAngles_.end()-angles.size(), desiredAngles_.end());         
+    //     // std::vector<double> dAngleSlice = desiredAngles_;
+    //     int error = meanError(dAngleSlice, angles);
+    //     std::cout << "\n\n---------------------------------------------------------\n\n";
         
 
-        //Fetched error e
-        //Now we have N scenarios
-        //And thresholds LowS, HighS
-        //And adjustment factor P
-        //Scenario 1. -LowS < e < +LowS -> Do nothing
-        //Scenario 2. -HighS < e < -LowS -> Field - P
-        //Scenario 3. e < -HighS -> K--
-        //Scenario 4. +LowS > e > +HighS -> Field + P
-        //Scenario 5. e > +HighS -> K++
+    //     //Fetched error e
+    //     //Now we have N scenarios
+    //     //And thresholds LowS, HighS
+    //     //And adjustment factor P
+    //     //Scenario 1. -LowS < e < +LowS -> Do nothing
+    //     //Scenario 2. -HighS < e < -LowS -> Field - P
+    //     //Scenario 3. e < -HighS -> K--
+    //     //Scenario 4. +LowS > e > +HighS -> Field + P
+    //     //Scenario 5. e > +HighS -> K++
 
 
-        //Slightly less verbose
-        //if e < 0: signFlag = -1
-        //else signFlag = 1
-        //then e = abs(e)
-        //Scenario 1. e < LowS -> Do Nothing
-        //Scenario 2. LowS < e < HighS -> Field + P*signFlag
-        //Scenario 3. e > HighS -> K += signFlag
-        int signFlag = (error < 0) ? -1 : 1;
-        std::cout << "Error " << error << "\n";
-        error = abs(error);
+    //     //Slightly less verbose
+    //     //if e < 0: signFlag = -1
+    //     //else signFlag = 1
+    //     //then e = abs(e)
+    //     //Scenario 1. e < LowS -> Do Nothing
+    //     //Scenario 2. LowS < e < HighS -> Field + P*signFlag
+    //     //Scenario 3. e > HighS -> K += signFlag
+    //     int signFlag = (error < 0) ? -1 : 1;
+    //     std::cout << "Error " << error << "\n";
+    //     error = abs(error);
 
-        if( error < lowError ) {
-            imshow("Post", post_img);
-            video_out.write(post_img);
-            char c= (char)waitKey(0);
-            if(c == 27 ) break;
-            else continue;
-        } else if ( error > lowError && error < upperError){
-            field  += field * 0.1 * signFlag;
-            std::cout << "Adjusting field\n";
-        } else if ( error > upperError){
-            EMulitplier += signFlag;
-            adjustStiffness(iLinks, EMulitplier);
-            field = CalculateField(iLinks, iJoints, iPosVec);
-            field(1) = 0;
-            std::cout << "Adjusting E\n";
-        }
+    //     if( error < lowError ) {
+    //         imshow("Post", post_img);
+    //         video_out.write(post_img);
+    //         char c= (char)waitKey(0);
+    //         if(c == 27 ) break;
+    //         else continue;
+    //     } else if ( error > lowError && error < upperError){
+    //         field  += field * 0.1 * signFlag;
+    //         std::cout << "Adjusting field\n";
+    //     } else if ( error > upperError){
+    //         EMulitplier += signFlag;
+    //         adjustStiffness(iLinks, EMulitplier);
+    //         field = CalculateField(iLinks, iJoints, iPosVec);
+    //         field(1) = 0;
+    //         std::cout << "Adjusting E\n";
+    //     }
 
-        std::cout << "E: " << EMulitplier << " applied field:\n" << field << "\n";
+    //     std::cout << "E: " << EMulitplier << " applied field:\n" << field << "\n";
         
-        if( abs(field(0)) > 20 && abs(field(2)) > 15 && abs(field(1)) > 20) break;
-        if( EMulitplier < 0 ) break;
+    //     if( abs(field(0)) > 20 && abs(field(2)) > 15 && abs(field(1)) > 20) break;
+    //     if( EMulitplier < 0 ) break;
 
 
-        mid.set3DField(field);
+    //     mid.set3DField(field);
 
 
-        imshow("Post", post_img);
-        video_out.write(post_img);
-        char c= (char)waitKey(500);
-        if(c==27) break;
+    //     imshow("Post", post_img);
+    //     video_out.write(post_img);
+    //     char c= (char)waitKey(500);
+    //     if(c==27) break;
         
-    }
-    video_out.release();
-    mid.~MiddlewareLayer();
+    // }
+    // video_out.release();
+    // mid.~MiddlewareLayer();
     // destroyAllWindows();
     // Pylon::PylonTerminate();
     return 0;
@@ -425,8 +425,28 @@ Vector3d CalculateField(std::vector<Link> &iLinks, std::vector<Joint> &iJoints,
 
     MatrixXd RHS = Jt*FieldMap;
     AnglesStacked = AnglesStacked * M_PI / 180;
-    MatrixXd LHS = KStacked * AnglesStacked;
-    
+
+    float density = 1000;
+    float v1 = iLinks[0].dL * (M_PI * pow( iLinks[0].d / 2, 2 ));
+    float mass = density * v1;
+    MatrixXd GlobalGrav(6,1);
+    GlobalGrav << 0 , 0 , -9.81 ,  0 ,  0 ,  0;
+    GlobalGrav = GlobalGrav * mass;
+    int jointEff = (int) iJoints.size();
+
+    MatrixXd StackedGrav = VerticalStack(GlobalGrav, GlobalGrav);
+    for(int i = 2; i < jointEff-1; i++){
+        StackedGrav = VerticalStack( StackedGrav, GlobalGrav);
+    }
+    // std::cout << "GlobalGrav\n" << GlobalGrav << "\n";
+    // std::cout << "StackedGrav\n" << StackedGrav << "\n";
+    // std::cout << "Jointeff: " << jointEff << "\n";
+    // std::cout << "Size of Jacobian: " << Jt.rows() << "x" << Jt.cols() << "\n";
+    // std::cout << "Size of Vertical Stack: " << StackedGrav.rows() << "x" << StackedGrav.cols() << "\n";
+    MatrixXd GravWrench = Jt * StackedGrav;
+    // std::cout << "GravWrench\n" << GravWrench << "\n";
+    MatrixXd LHS = KStacked * AnglesStacked + GravWrench;
+    // MatrixXd LHS = KStacked * AnglesStacked ;
     MatrixXd solution = RHS.completeOrthogonalDecomposition().solve(LHS);
     return solution * 1000;
 }
