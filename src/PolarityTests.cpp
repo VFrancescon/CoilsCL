@@ -19,18 +19,22 @@ int main(int argc, char* argv[]){
     std::cout << "0x00";
     psu1.setPolarityGen2(0x00);
     std::cout << "Press enter to continue\n";
+    std::cin.get();
 
     std::cout << "0x01";
     psu1.setPolarityGen2(0x01);
     std::cout << "Press enter to continue\n";
+    std::cin.get();
 
     std::cout << "0x02";
     psu1.setPolarityGen2(0x02);
     std::cout << "Press enter to continue\n";
+    std::cin.get();
 
     std::cout << "0x03";
     psu1.setPolarityGen2(0x03);
     std::cout << "Press enter to continue\n";
+    std::cin.get();
     
     
     std::cout << "Quitting\n";
