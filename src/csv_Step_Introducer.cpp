@@ -54,22 +54,22 @@ int main(int argc, char *argv[])
 
             if (counter == 6)
             {
-                bx.push_back(std::stof(word) * -3);
-                bx.push_back(std::stof(word) * -3);
-                bx.push_back(std::stof(word) * -3);
+                bx.push_back(std::stof(word) * 1);
+                bx.push_back(std::stof(word) * 1);
+                bx.push_back(std::stof(word) * 1);
             }
             if (counter == 7)
             {
-                by.push_back(std::stof(word) * -4);
-                by.push_back(std::stof(word) * -4);
-                by.push_back(std::stof(word) * -4);
+                by.push_back(std::stof(word) * 1);
+                by.push_back(std::stof(word) * 1);
+                by.push_back(std::stof(word) * 1);
             }
 
             if (counter == 8)
             {
-                bz.push_back(std::stof(word) * -3);
-                bz.push_back(std::stof(word) * -3);
-                bz.push_back(std::stof(word) * -3);
+                bz.push_back(std::stof(word) * 1);
+                bz.push_back(std::stof(word) * 1);
+                bz.push_back(std::stof(word) * 1);
             }
             counter++;
         }
@@ -136,8 +136,8 @@ int main(int argc, char *argv[])
 
     VideoWriter video_out("CSV_STEP_INTRODUCER.avi", VideoWriter::fourcc('M', 'J', 'P', 'G'), 10,
                           Size(rows, cols));
-
-    MiddlewareLayer mid;
+    int OP_MODE=1;
+    MiddlewareLayer mid(OP_MODE);
     std::cout << "Everything initialised properly. Press enter to begin.";
     std::cin.get();
 
@@ -152,6 +152,7 @@ int main(int argc, char *argv[])
         mid.stepIntroducer();
         mid.set3DField(bx[step_count], by[step_count], bz[step_count]);
         step_count++;
+        usleep(1e6);
 
         camera.RetrieveResult(5000, ptrGrabResult, Pylon::TimeoutHandling_ThrowException);
         const uint8_t *pImageBuffer = (uint8_t *)ptrGrabResult->GetBuffer();
@@ -207,9 +208,10 @@ int main(int argc, char *argv[])
         while (true)
     {
         // step 50 times (to the limit)
-        mid.stepIntroducer();
+        mid.retractIntroducer();
         mid.set3DField(bxINV[step_count], byINV[step_count], bzINV[step_count]);
         step_count--;
+        usleep(1e6);
 
         camera.RetrieveResult(5000, ptrGrabResult, Pylon::TimeoutHandling_ThrowException);
         const uint8_t *pImageBuffer = (uint8_t *)ptrGrabResult->GetBuffer();
