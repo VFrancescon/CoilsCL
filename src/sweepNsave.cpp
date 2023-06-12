@@ -26,7 +26,6 @@ int main(int argc, char * argv[])
         INITIALISING THE MIDDLEWARE HERE, DO NOT TOUCH
         ****************************/
         bool psu_only = true;
-        MiddlewareLayer mid(psu_only);
 
 
         /***************************
@@ -65,26 +64,29 @@ int main(int argc, char * argv[])
         ****************************/
         std::cout << "Press enter to begin PSU Operation.";
         std::cin.get();
-        usleep(5e6);
         camera.RetrieveResult(5000, ptrGrabResult, Pylon::TimeoutHandling_ThrowException);
         const uint8_t* preImageBuffer = (uint8_t*) ptrGrabResult->GetBuffer();
         formatConverter.Convert(pylonImage, ptrGrabResult);
-        outputFileName = "JoshDavyResults/" + date + expName + "refPicture.png";
+        outputFileName = "FMPResults/" + date + expName + "refPicture.png";
         Pylon::String_t path = outputFileName.c_str();
         pylonImage.Save(png, path);
         /***************************
         WRITE YOUR CODE HERE
         ****************************/
         int counter = 1;
-        float i = 0.f;
-        std::cout << "Initialising. setting field to -20\n";
+        float i = -20.f;
+        if(argc == 3 ){
+            i = std::stof(argv[2]);
+        }
+        MiddlewareLayer mid(psu_only);
+        std::cout << "Initialising. setting field to " << i << " \n";
         mid.set3DField(i, 0, 0);
         std::cout << "Initialisation complete. Press Enter to begin.";
         std::cin.get();
 
         while(camera.IsGrabbing()){
         while(true){
-            outputFileName = "JoshDavyResults/" + date + expName + "_" + std::to_string(counter) 
+            outputFileName = "FMPResults/" + date + expName + "_" + std::to_string(counter) 
             + "_" + std::to_string((int) i) + ".png";
             path = outputFileName.c_str();
             
@@ -97,12 +99,12 @@ int main(int argc, char * argv[])
             std::cout << "\n\n--------------------NEW ITERATION--------------------\n\n";
             std::cout << "Setting field to " << field << "\n";
             mid.set3DField(field, 0, 0);
-            i = i + 5.f;
+            i = i + 2.f;
             counter++;
             std::cout << "Field set. going to sleep for " << WAITTIME << " seconds\n";
             
             // Sleep for some time
-            usleep(20e6);
+            usleep(10e6);
 
             // Take a snapshot from the camera
             
