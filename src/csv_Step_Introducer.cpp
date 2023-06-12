@@ -134,7 +134,7 @@ int main(int argc, char *argv[])
             }
      */
 
-    VideoWriter video_out("output.avi", VideoWriter::fourcc('M', 'J', 'P', 'G'), 10,
+    VideoWriter video_out("CSV_STEP_INTRODUCER.avi", VideoWriter::fourcc('M', 'J', 'P', 'G'), 10,
                           Size(rows, cols));
     int OP_MODE=1;
     MiddlewareLayer mid(OP_MODE);
